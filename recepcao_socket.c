@@ -1,7 +1,3 @@
-/*-------------------------------------------------------------*/
-/* Exemplo Socket Raw - Captura pacotes recebidos na interface */
-/*-------------------------------------------------------------*/
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -61,7 +57,7 @@ int main(int argc,char *argv[])
 		//trata apenas pacotes IP (tipo 0x0800) com UDP (0X11)
 		if(buff1[12] == 8 && buff1[13] == 0 && buff1[23] == 17)
 		{
-			// impressão do conteudo - exemplo Endereco Destino e Endereco Origem
+			// impressï¿½o do conteudo - exemplo Endereco Destino e Endereco Origem
 			printf("Destination MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", buff1[0],buff1[1],buff1[2],buff1[3],buff1[4],buff1[5]);
 			printf("Source MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", buff1[6],buff1[7],buff1[8],buff1[9],buff1[10],buff1[11]);
 			printf("Ether Type: %02x%02x \n", buff1[12], buff1[13]);
