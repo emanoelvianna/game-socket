@@ -19,29 +19,64 @@
 typedef unsigned char MacAddress[MAC_ADDR_LEN];
 extern int errno;
 
-void usage(char * exec) {
-  printf("%s <IP destino> <MAC destino> <Porta>\n", exec);
+void usage(char* exec) 
+{
+	printf("%s <IP destino> <MAC destino> <MAC origem> <Porta>\n", exec);
 }
 
 int main(int argc, char * argv[])
 {
-	if (argc < 4) {
-    	usage(argv[0]);
-  	} else {
+	if (argc < 5) 
+	{
+		usage(argv[0]);
+	} 
+	else 
+	{
 		struct estrutura_pacote pacote;
 		unsigned char buffer[BUFFER_LEN];
 
-    	printf("MAC destino: %s\n", argv[2]);
-		
-		/** montando o pacote **/
+		//printf("MAC destino: %s\n", argv[2]);
+
+		/* 
+         * montando o pacote 
+         */
+        //MAC DESTINO
 		memcpy(&pacote.target_ethernet_address, argv[2], ETHERNET_ADDR_LEN);
-		printf("MAC destino: %02x:%02x:%02x:%02x:%02x:%02x\n",
-				   pacote.target_ethernet_address[0],
-				   pacote.target_ethernet_address[1],
-				   pacote.target_ethernet_address[2],
-				   pacote.target_ethernet_address[3],
-				   pacote.target_ethernet_address[4],
-				   pacote.target_ethernet_address[5]);
+		printf("MAC Destino: %02x:%02x:%02x:%02x:%02x:%02x\n",
+				pacote.target_ethernet_address[0],
+				pacote.target_ethernet_address[1],
+				pacote.target_ethernet_address[2],
+				pacote.target_ethernet_address[3],
+				pacote.target_ethernet_address[4],
+				pacote.target_ethernet_address[5]);
+
+        //MAC ORIGEM
+        memcpy(&pacote.source_ethernet_address, argv[3], ETHERNET_ADDR_LEN);
+		printf("MAC Origem: %02x:%02x:%02x:%02x:%02x:%02x\n",
+				pacote.target_ethernet_address[6],
+				pacote.target_ethernet_address[7],
+				pacote.target_ethernet_address[8],
+				pacote.target_ethernet_address[9],
+				pacote.target_ethernet_address[10],
+				pacote.target_ethernet_address[11]);
+
+        //ETHER TYPE = 0x0800 (ethernet)
+        pacote.ethernet_type = (unsigned short) 2048;
+        printf("Ether type: %d \n", pacote.ethernet_type);
+
+        //VERSION = 4
+        pacote.version = 4;
+        printf("Version: %02x \n", pacote.version);
+
+        //IHL
+        //TODO: descobrir a logica que determina esse valor
+        pacote.ihl = 5;
+        printf("IHL: %02x \n", pacote.ihl);
+
+        //TYPE OF SERVICE
+        //TODO: descobrir a logica que determina esse valor
+        pacote.tos = 0;
+        printf("Type of Service: %02x \n", tos);
 
 		/* configuracoes para o socket */		   	
 		int sockFd = 0, retValue = 0; 
@@ -54,7 +89,8 @@ int main(int argc, char * argv[])
 		MacAddress destMac = {0x00, 0x17, 0x9A, 0xB3, 0x9E, 0x16};
 
 		/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
-		if((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
+		if((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) 
+		{
 			printf("Erro na criacao do socket.\n");
 			exit(1);
 		}
@@ -74,13 +110,20 @@ int main(int argc, char * argv[])
 		/* Add some data */
 		memcpy((buffer+ETHERTYPE_LEN+(2*MAC_ADDR_LEN)), dummyBuf, 50);
 
-		while(1) {
+		//while(1) 
+		//{
 			/* Envia pacotes de 64 bytes */
-			if((retValue = sendto(sockFd, buffer, 64, 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0) {
+			if((retValue = sendto(sockFd, buffer, 64, 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0) 
+			{
 				printf("ERROR! sendto() \n");
 				exit(1);
 			}
-			//printf("Send success (%d).\n", retValue);
-		}
+            else
+            {
+                printf("Send success (%d).\n", retValue);
+            }
+			
+		//}
+        
 	}
 }
