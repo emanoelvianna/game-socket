@@ -5,81 +5,78 @@
 #include <sys/ioctl.h>
 #include <string.h>
 #include <unistd.h>
+#include <net/if.h>
+#include <netinet/ether.h>
+#include <netinet/in.h>
+#include <arpa/inet.h> 
+#include <netinet/in_systm.h>
 
-/* Diretorios: net, netinet, linux contem os includes que descrevem */
-/* as estruturas de dados do header dos protocolos   	  	        */
+#define BUFFSIZE 1518 /* definicao do tamanho do buffer */
+/* definicao do tamanho da matriz */
+#define N_LINHAS 3
+#define N_COLUNAS 3
 
-#include <net/if.h>  //estrutura ifr
-#include <netinet/ether.h> //header ethernet
-#include <netinet/in.h> //definicao de protocolos
-#include <arpa/inet.h> //funcoes para manipulacao de enderecos IP
-
-#include <netinet/in_systm.h> //tipos de dados
-
-#define BUFFSIZE 1518
-
-// Atencao!! Confira no /usr/include do seu sisop o nome correto
-// das estruturas de dados dos protocolos.
-
+char matriz [N_LINHAS][N_COLUNAS];
 unsigned char buff1[BUFFSIZE]; // buffer de recepcao
 unsigned char buff_aux;
-
 int sockd;
 int on;
 struct ifreq ifr;
 
-int main(int argc,char *argv[])
-{
-	/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
-	/* De um "man" para ver os parametros.*/
-	/* htons: converte um short (2-byte) integer para standard network byte order. */
-	if((sockd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) 
-	{
-		printf("Erro na criacao do socket.\n");
-		exit(1);
-	}
+/* metodo para incializar a matriz vazia */
+void iniciarMatriz() {
+  int i, j;
+  for (i = 0; i < N_LINHAS; i++) {
+    for (j = 0; j < N_COLUNAS; j++) {
+      matriz[i][j] = '.';
+    }
+  }
+}
 
-	// O procedimento abaixo eh utilizado para "setar" a interface em modo promiscuo
-	strcpy(ifr.ifr_name, "enp2s0");
-	if(ioctl(sockd, SIOCGIFINDEX, &ifr) < 0)
-	{	
-		printf("erro no ioctl!");
-	}
-	ioctl(sockd, SIOCGIFFLAGS, &ifr);
-	ifr.ifr_flags |= IFF_PROMISC;
-	ioctl(sockd, SIOCSIFFLAGS, &ifr);
+/* metodo para desenhar a matriz */
 
-	// recepcao de pacotes
-	while (1) 
-	{
-		recv(sockd,(char *) &buff1, sizeof(buff1), 0x0);
+void print() {
+  printf("   1   2   3   \n");
+  printf(" 1 %c | %c | %c \n", matriz[0][0], matriz[0][1], matriz[0][2]);
+  printf("  ---|---|--- \n ");
+  printf("2 %c | %c | %c \n", matriz[1][0], matriz[1][1], matriz[1][2]);
+  printf("  ---|---|--- \n ");
+  printf("3 %c | %c | %c \n", matriz[2][0], matriz[2][1], matriz[2][2]);
+  printf("\n");
+}
 
-		//trata apenas pacotes IP (tipo 0x0800) com UDP (0X11)
-		if(buff1[12] == 8 && buff1[13] == 0 && buff1[23] == 17)
-		{
-			// impress�o do conteudo - exemplo Endereco Destino e Endereco Origem
-			printf("Destination MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", buff1[0],buff1[1],buff1[2],buff1[3],buff1[4],buff1[5]);
-			printf("Source MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", buff1[6],buff1[7],buff1[8],buff1[9],buff1[10],buff1[11]);
-			printf("Ether Type: %02x%02x \n", buff1[12], buff1[13]);
-			printf("Version: %02x \n", buff1[14] >> 4);
-            buff_aux = 0;
-            buff_aux = buff1[14] << 4;
-            buff_aux = buff_aux >> 4;
-            printf("IHL: %02x \n", buff_aux);
-            printf("Type of Service: %02x \n", buff1[15]);
-            printf("Total Length: %02x%02x \n", buff1[16], buff1[17]);
-            printf("Identification: %02x%02x \n", buff1[18], buff1[19]);
-            printf("Flags + Fragment Offset: %02x%02x \n", buff1[20], buff1[21]);
-            printf("Time to Live: %02x \n", buff1[22]);
-            printf("Protocol: %02x \n", buff1[23]);
-            printf("Header Checksum: %02x%02x \n", buff1[24], buff1[25]);
-            printf("Source Address: %02x%02x%02x%02x \n", buff1[26], buff1[27], buff1[28], buff1[29]);
-            printf("Destination Address: %02x%02x%02x%02x \n", buff1[30], buff1[31], buff1[32], buff1[33]);
-            printf("Source Port: %02x%02x \n", buff1[34], buff1[35]);
-            printf("Destination Port: %02x%02x \n", buff1[36], buff1[37]);
-            printf("Length: %02x%02x \n", buff1[38], buff1[39]);
-            printf("Checksum: %02x%02x \n", buff1[40], buff1[41]);
-            printf("\n");
-		}                
-	}
+/* metodo para adicionar uma jogada a matriz */
+void adicionarJogada(int linha, int coluna, char peca) {
+  int i, j;
+  for (i = 0; i < N_LINHAS; i++) {
+    for (j = 0; j < N_COLUNAS; j++) {
+      if (linha == i && coluna == j)
+        matriz[i][j] = peca;
+    }
+  }
+}
+
+int main(int argc, char * argv[]) {
+  iniciarMatriz();
+  /* configuracoes para o socket */
+  if ((sockd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) {
+    printf("Erro na criacao do socket.\n");
+    exit(1);
+  }
+
+  /* O procedimento abaixo eh utilizado para "setar" a interface em modo promiscuo */
+  strcpy(ifr.ifr_name, "enp2s0");
+  if (ioctl(sockd, SIOCGIFINDEX, & ifr) < 0) {
+    printf("erro no ioctl!");
+  }
+  ioctl(sockd, SIOCGIFFLAGS, & ifr);
+  ifr.ifr_flags |= IFF_PROMISC;
+  ioctl(sockd, SIOCSIFFLAGS, & ifr);
+
+  /* recepcao de pacotes */
+  while (1) {
+    print();
+	adicionarJogada(0, 0, 'x');
+	adicionarJogada(1, 1, 'o');
+  }
 }
