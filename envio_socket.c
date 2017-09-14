@@ -77,7 +77,7 @@ int main(int argc, char * argv[])
 		//SINALIZA QUE O PACOTE É DO JOGO COM O VALOR TRUE
 		buffer[42] = true;
 		//O BYTE 43 CONTÉM A JOGADA (ÍNDICE DA MATRIZ = 9 POSICOES)
-		jogada = '9';
+		jogada = '8';
 		buffer[43] = jogada;
 
 		//while(1) 
