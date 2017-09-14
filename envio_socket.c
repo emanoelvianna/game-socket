@@ -43,11 +43,11 @@ int main(int argc, char *argv[])
 
 		printf("MAC destino: %s\n", argv[2]);
 
-		/** montando o pacote
+		/** montando o pacote 
 		
-		strcpy(source_protocol_address, argv[1]);
+		strcpy(pacote.source_protocol_address, argv[1]);
 		printf("IP origem: %s\n", source_protocol_address);
-		strcpy(source_hardware_address, argv[2]);
+		strcpy(pacote.source_hardware_address, argv[2]);
 		printf("MAC origem: %s\n", source_hardware_address);
 
 		strcpy(target_protocol_address, argv[3]);

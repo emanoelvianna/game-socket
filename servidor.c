@@ -27,7 +27,8 @@ bool jogador1 = false;
 bool jogador2 = false;
 
 /* metodo para incializar a matriz vazia */
-void iniciarMatriz() {
+void iniciarMatriz() 
+{
   int i, j;
   for (i = 0; i < N_LINHAS; i++) {
     for (j = 0; j < N_COLUNAS; j++) {
@@ -38,7 +39,8 @@ void iniciarMatriz() {
 
 /* metodo para desenhar a matriz */
 
-void desenhaMatriz() {
+void desenhaMatriz() 
+{
   printf("   1   2   3   \n");
   printf(" 1 %c | %c | %c \n", matriz[0][0], matriz[0][1], matriz[0][2]);
   printf("  ---|---|--- \n ");
@@ -49,7 +51,8 @@ void desenhaMatriz() {
 }
 
 /* metodo para adicionar uma jogada a matriz */
-void adicionarJogada(int linha, int coluna, char peca) {
+void adicionarJogada(int linha, int coluna, char peca) 
+{
   int i, j;
   for (i = 0; i < N_LINHAS; i++) {
     for (j = 0; j < N_COLUNAS; j++) {
@@ -66,23 +69,18 @@ int getMacServer()
     struct ifreq ifr;
      
     fd = socket(AF_INET, SOCK_DGRAM, 0);
- 
     ifr.ifr_addr.sa_family = AF_INET;
     strncpy(ifr.ifr_name , input_ifname , IFNAMSIZ-1);
- 
     ioctl(fd, SIOCGIFHWADDR, &ifr);
- 
     close(fd);
 
     mac_server = (unsigned char *)ifr.ifr_hwaddr.sa_data;
      
-    /*  */
-    printf("Mac Server: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x\n" , mac_server[0], mac_server[1], mac_server[2], mac_server[3], mac_server[4], mac_server[5]);
- 
     return 0;
 }
 
-int servidor()
+/* metodo para o servidor */
+int servidor() 
 {
 	int fd;
 	unsigned char buffer[BUFFER_SIZE];
@@ -165,6 +163,7 @@ int servidor()
 	}
 }
 
+/* metodo para realizar validação sobre entrada do usuario */
 void usage(char *exec)
 {
     printf("%s <interface de rede> <porta>\n", exec);
