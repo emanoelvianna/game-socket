@@ -2,12 +2,7 @@
 /* declaracao das constantes */
 #define ETHERNET_ADDR_LEN 6
 #define IP_ADDR_LEN 4
-#define ARP_PADDING_SIZE 18
 #define ETHERTYPE 0x0800 /** indicando que é do tipo IPv4 **/
-#define ARPHRD_ETHER 1
-#define ETH_P_IP 0x0800
-#define ARPOP_REQUEST 1
-#define ARPOP_REPLY 2
 
 #define BUFFER_SIZE 1500 /** tamanho do buffer de leitura do pacote ethernet+ipv4+udp **/
 

@@ -19,6 +19,8 @@
 #define N_COLUNAS 3
 
 char matriz [N_LINHAS][N_COLUNAS];
+char *input_ifname;
+unsigned char *mac_server;
 
 /* metodo para incializar a matriz vazia */
 void iniciarMatriz() {
@@ -53,7 +55,29 @@ void adicionarJogada(int linha, int coluna, char peca) {
   }
 }
 
-int servidor(char *input_ifname)
+int getMacServer() 
+{
+		int fd;
+    struct ifreq ifr;
+     
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+ 
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name , input_ifname , IFNAMSIZ-1);
+ 
+    ioctl(fd, SIOCGIFHWADDR, &ifr);
+ 
+    close(fd);
+
+    mac_server = (unsigned char *)ifr.ifr_hwaddr.sa_data;
+     
+    /*  */
+    printf("Mac Server: %.2x:%.2x:%.2x:%.2x:%.2x:%.2x\n" , mac_server[0], mac_server[1], mac_server[2], mac_server[3], mac_server[4], mac_server[5]);
+ 
+    return 0;
+}
+
+int servidor()
 {
 	int fd;
 	unsigned char buffer[BUFFER_SIZE];
@@ -93,11 +117,38 @@ int servidor(char *input_ifname)
 		exit(1);
 	}
 
+	getMacServer();
+
 	printf(" Esperando jogadores ... \n");
 	while(1) {
+
+		struct estrutura_pacote pacote;
+
+		/* Recebe pacotes */
+		if (recv(fd, (char *)&buffer, BUFFER_SIZE, 0) < 0)
+		{
+			perror("recv");
+			close(fd);
+			exit(1);
+		}
+
+		/* Copia o conteudo dos protocolos Ethernet, IPv4 e UDP */
+		memcpy(&pacote, buffer, sizeof(buffer));
+		pacote.ethernet_type = ntohs(pacote.ethernet_type);
+
 		//TODO: verificar se o pacote trafegado é de um jogador
 		//TODO: verificar se é um pacote udp
 		//TODO: capturar jogada e adicionar a matriz
+
+		/* verifica se é um pacote IPv4 */
+		if (pacote.ethernet_type == ETHERTYPE)
+		{
+				/* verifica se o mac destino é o server */
+				if(pacote.target_ethernet_address) {
+					
+				}
+		}
+
 	}
 }
 
@@ -114,7 +165,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-			servidor(argv[1]);
+			input_ifname = argv[1];
+			servidor();
     }
     return 0;
 }
