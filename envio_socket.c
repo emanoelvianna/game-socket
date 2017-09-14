@@ -71,8 +71,11 @@ int main(int argc, char * argv[])
 		memcpy((buffer+ETHERTYPE_LEN+(2*MAC_ADDR_LEN)), dummyBuf, 50);
 
         //CONTINUACAO DOS DADOS NO PACOTE
+	//PROTOCOLO
         buffer[23] = 17;
+	//SINALIZA QUE O PACOTE É DO JOGO COM O VALOR TRUE
         buffer[42] = true;
+	//O BYTE 43 CONTÉM A JOGADA (ÍNDICE DA MATRIZ = 9 POSICOES)
         jogada = '9';
         buffer[43] = jogada;
 
