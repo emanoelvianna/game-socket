@@ -75,7 +75,17 @@ int getMacServer()
     close(fd);
 
     mac_server = (unsigned char *)ifr.ifr_hwaddr.sa_data;
-     
+
+		printf("Meu MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+				mac_server[0],
+				mac_server[1],
+				mac_server[2],
+				mac_server[3],
+				mac_server[4],
+				mac_server[5]);
+
+		sprintf(sender_ip, "%s", inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));		
+
     return 0;
 }
 
@@ -88,6 +98,9 @@ int servidor()
 	char ifname[IFNAMSIZ];
 
 	strcpy(ifname, input_ifname);
+
+	/* obtendo o mac do servidor */
+	getMacServer();	
 
 	/* Cria um descritor de socket do tipo RAW */
 	fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
@@ -120,8 +133,6 @@ int servidor()
 		exit(1);
 	}
 
-	getMacServer();
-
 	if(jogador1 == false && jogador2 == false){
 		printf(" Esperando jogadores ... \n");
 	}
@@ -149,8 +160,17 @@ int servidor()
 		/* verifica se é um pacote IPv4 */
 		if (pacote.ethernet_type == ETHERTYPE)
 		{
+				printf("MAC destino: %02x:%02x:%02x:%02x:%02x:%02x\n",
+				   pacote.target_ethernet_address[0],
+				   pacote.target_ethernet_address[1],
+				   pacote.target_ethernet_address[2],
+				   pacote.target_ethernet_address[3],
+				   pacote.target_ethernet_address[4],
+				   pacote.target_ethernet_address[5]);
+
 				/* verifica se o mac destino é o server */
 				if(memcpy(&pacote.target_ethernet_address, mac_server, sizeof(mac_server))  == 0){
+					printf("opa mesmo!");
 					/* adicionando jogadores a partida */
 					if(jogador1 == false) {
 						jogador1 = true;	
@@ -177,7 +197,9 @@ int main(int argc, char *argv[])
     }
     else
     {
+			/* obtendo interface de rede */
 			input_ifname = argv[1];
+			/* rodando o servidor para iniciar o game */
 			servidor();
     }
     return 0;

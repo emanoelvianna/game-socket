@@ -67,8 +67,8 @@ int main(int argc, char *argv[])
 		short int etherTypeT = htons(0x8200);
 
 		/* Configura MAC Origem e Destino */
-		MacAddress localMac = {0x00, 0x0B, 0xCD, 0xA8, 0x6D, 0x91};
-		MacAddress destMac = {0x00, 0x17, 0x9A, 0xB3, 0x9E, 0x16};
+		MacAddress localMac = {0x2c, 0x59, 0xe5, 0xbe, 0x82, 0xf9};
+		MacAddress destMac = {0x2c, 0x59, 0xe5, 0xbe, 0x82, 0xf9};
 
 		/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
 		if ((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0)
