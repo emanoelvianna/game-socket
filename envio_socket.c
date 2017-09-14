@@ -16,6 +16,7 @@
 #define ETHERTYPE_LEN 2
 #define MAC_ADDR_LEN 6
 #define BUFFER_LEN 1518 //TODO: rever o tamanho do buffer!
+#define UDP_PROTOCOL 17
 
 typedef unsigned char MacAddress[MAC_ADDR_LEN];
 extern int errno;
@@ -44,10 +45,10 @@ int main(int argc, char * argv[])
 		char dummyBuf[50];
 		short int etherTypeT = htons(0x800);
 
-        /* Configura MAC Origem e Destino */
-        MacAddress localMac = {0x50, 0xB7, 0xC3, 0x42, 0x6F, 0xA1};
+		/* Configura MAC Origem e Destino */
+		MacAddress localMac = {0x50, 0xB7, 0xC3, 0x42, 0x6F, 0xA1};
 		MacAddress destMac = {0x50, 0xB7, 0xC3, 0x42, 0x6F, 0xA1};
-		
+
 		/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
 		if((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) 
 		{
@@ -70,30 +71,30 @@ int main(int argc, char * argv[])
 		/* Add some data */
 		memcpy((buffer+ETHERTYPE_LEN+(2*MAC_ADDR_LEN)), dummyBuf, 50);
 
-        //CONTINUACAO DOS DADOS NO PACOTE
-	//PROTOCOLO
-        buffer[23] = 17;
-	//SINALIZA QUE O PACOTE É DO JOGO COM O VALOR TRUE
-        buffer[42] = true;
-	//O BYTE 43 CONTÉM A JOGADA (ÍNDICE DA MATRIZ = 9 POSICOES)
-        jogada = '9';
-        buffer[43] = jogada;
+		//CONTINUACAO DOS DADOS NO PACOTE
+		//PROTOCOLO
+		buffer[23] = UDP_PROTOCOL;
+		//SINALIZA QUE O PACOTE É DO JOGO COM O VALOR TRUE
+		buffer[42] = true;
+		//O BYTE 43 CONTÉM A JOGADA (ÍNDICE DA MATRIZ = 9 POSICOES)
+		jogada = '9';
+		buffer[43] = jogada;
 
 		//while(1) 
 		//{
-			/* Envia pacotes de 64 bytes */
-			//if((retValue = sendto(sockFd, buffer, 64, 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0) 
-            if((retValue = sendto(sockFd, buffer, 64, 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0) 			    
-            {
-				printf("ERROR! sendto() \n");
-				exit(1);
-			}
-            else
-            {
-                printf("Send success (%d).\n", retValue);
-            }
-			
+		/* Envia pacotes de 64 bytes */
+		//if((retValue = sendto(sockFd, buffer, 64, 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0) 
+		if((retValue = sendto(sockFd, buffer, 64, 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0) 			    
+		{
+			printf("ERROR! sendto() \n");
+			exit(1);
+		}
+		else
+		{
+			printf("Send success (%d).\n", retValue);
+		}
+
 		//}
-        
+
 	}
 }
