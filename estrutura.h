@@ -13,10 +13,6 @@ unsigned char jogador1_protocol_address[IP_ADDR_LEN];       // endereco_logico_j
 unsigned char jogador2_hardware_address[ETHERNET_ADDR_LEN]; // endereco_fisico_jogador2
 unsigned char jogador2_protocol_address[IP_ADDR_LEN];       // endereco_logico_jogador2
 
-/*  */
-unsigned char jogador2_hardware_address[ETHERNET_ADDR_LEN]; // endereco_fisico_jogador2
-unsigned char jogador2_protocol_address[IP_ADDR_LEN];       // endereco_logico_jogador2
-
 struct estrutura_pacote
 {
     /* Cabeçalho Ethernet */
