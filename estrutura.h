@@ -9,6 +9,8 @@
 #define ARPOP_REQUEST 1
 #define ARPOP_REPLY 2
 
+#define BUFFER_SIZE 1500 /** tamanho do buffer de leitura do pacote ethernet+ipv4+udp **/
+
 /* declaracao das estruturas */
 unsigned char source_hardware_address[ETHERNET_ADDR_LEN]; // endereco_fisico_origem
 unsigned char source_protocol_address[IP_ADDR_LEN];       // endereco_logico_origem

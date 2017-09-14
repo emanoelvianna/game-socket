@@ -10,7 +10,7 @@
 #include <netinet/ether.h>
 #include <netinet/in.h>
 /* utilizando os utilitarios */
-#include "envio_socket.h"
+#include "estrutura.h"
 
 #define ETHERTYPE_LEN 2
 #define MAC_ADDR_LEN 6
