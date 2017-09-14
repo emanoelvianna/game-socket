@@ -7,6 +7,7 @@
 #include <netinet/ether.h>
 #include <arpa/inet.h>
 #include <linux/if_packet.h>
+#include <stdbool.h>
 /* utilizando os utilitarios */
 #include "estrutura.h"
 
@@ -21,6 +22,9 @@
 char matriz [N_LINHAS][N_COLUNAS];
 char *input_ifname;
 unsigned char *mac_server;
+/* definição dos jogadores  */
+bool jogador1 = false;
+bool jogador2 = false;
 
 /* metodo para incializar a matriz vazia */
 void iniciarMatriz() {
@@ -55,6 +59,7 @@ void adicionarJogada(int linha, int coluna, char peca) {
   }
 }
 
+/* metodo auxiliar para buscar o mac do server */
 int getMacServer() 
 {
 		int fd;
@@ -119,7 +124,10 @@ int servidor()
 
 	getMacServer();
 
-	printf(" Esperando jogadores ... \n");
+	if(jogador1 == false && jogador2 == false){
+		printf(" Esperando jogadores ... \n");
+	}
+
 	while(1) {
 
 		struct estrutura_pacote pacote;
@@ -144,8 +152,13 @@ int servidor()
 		if (pacote.ethernet_type == ETHERTYPE)
 		{
 				/* verifica se o mac destino é o server */
-				if(pacote.target_ethernet_address) {
-					
+				if(memcpy(&pacote.target_ethernet_address, mac_server, sizeof(mac_server))  == 0){
+					/* adicionando jogadores a partida */
+					if(jogador1 == false) {
+						jogador1 = true;	
+					} else if(jogador2 == false) {
+						jogador2 = true;
+					}
 				}
 		}
 

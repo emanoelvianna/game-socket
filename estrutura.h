@@ -7,11 +7,11 @@
 #define BUFFER_SIZE 1500 /** tamanho do buffer de leitura do pacote ethernet+ipv4+udp **/
 
 /* declaracao das estruturas */
-unsigned char source_hardware_address[ETHERNET_ADDR_LEN]; // endereco_fisico_origem
-unsigned char source_protocol_address[IP_ADDR_LEN];       // endereco_logico_origem
+unsigned char jogador1_hardware_address[ETHERNET_ADDR_LEN]; // endereco_fisico_jogador1
+unsigned char jogador1_protocol_address[IP_ADDR_LEN];       // endereco_logico_jogador1
 
-unsigned char target_hardware_address[ETHERNET_ADDR_LEN]; // endereco_fisico_destino
-unsigned char target_protocol_address[IP_ADDR_LEN];       // endereco_logico_destino
+unsigned char jogador2_hardware_address[ETHERNET_ADDR_LEN]; // endereco_fisico_jogador2
+unsigned char jogador2_protocol_address[IP_ADDR_LEN];       // endereco_logico_jogador2
 
 struct estrutura_pacote
 {

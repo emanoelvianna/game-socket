@@ -8,4 +8,3 @@ servidor:	servidor.c
 
 clean:
 			rm -f envio servidor *~
-
