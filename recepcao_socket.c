@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -44,7 +45,7 @@ int main(int argc,char *argv[])
 	strcpy(ifr.ifr_name, "enp2s0");
 	if(ioctl(sockd, SIOCGIFINDEX, &ifr) < 0)
 	{	
-		printf("erro no ioctl!");
+		//printf("erro no ioctl!");
 	}
 	ioctl(sockd, SIOCGIFFLAGS, &ifr);
 	ifr.ifr_flags |= IFF_PROMISC;
@@ -56,7 +57,7 @@ int main(int argc,char *argv[])
 		recv(sockd,(char *) &buff1, sizeof(buff1), 0x0);
 
 		//trata apenas pacotes IP (tipo 0x0800) com UDP (0X11)
-		if(buff1[12] == 8 && buff1[13] == 0 && buff1[23] == 17)
+		if(buff1[12] == 8 && buff1[13] == 0 && buff1[23] == 17 && buff1[42] == true)
 		{
 			// impressao do conteudo - exemplo Endereco Destino e Endereco Origem
 			printf("Destination MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", buff1[0],buff1[1],buff1[2],buff1[3],buff1[4],buff1[5]);
@@ -80,8 +81,9 @@ int main(int argc,char *argv[])
 			printf("Destination Port: %02x%02x \n", buff1[36], buff1[37]);
 			printf("Length: %02x%02x \n", buff1[38], buff1[39]);
 			printf("Checksum: %02x%02x \n", buff1[40], buff1[41]);
-			//buff_aux = buff1[42];
-			buff_aux = '4';
+			buff_aux = buff1[42];
+            printf("Datagram of the game: %s\n", buff_aux ? "true" : "false");
+            buff_aux = buff1[43];
             position_choosed_by_player = buff_aux - '0';
 			printf("Position choosed by player: %d \n", position_choosed_by_player);
 			printf("\n");
