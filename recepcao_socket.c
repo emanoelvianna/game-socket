@@ -82,9 +82,9 @@ int main(int argc,char *argv[])
 			printf("Length: %02x%02x \n", buff1[38], buff1[39]);
 			printf("Checksum: %02x%02x \n", buff1[40], buff1[41]);
 			buff_aux = buff1[42];
-            printf("Datagram of the game: %s\n", buff_aux ? "true" : "false");
-            buff_aux = buff1[43];
-            position_choosed_by_player = buff_aux - '0';
+			printf("Datagram of the game: %s\n", buff_aux ? "true" : "false");
+			buff_aux = buff1[43];
+			position_choosed_by_player = buff_aux - '0';
 			printf("Position choosed by player: %d \n", position_choosed_by_player);
 			printf("\n");
 		}                
