@@ -32,7 +32,7 @@ struct ifreq ifr;
 
 int main(int argc,char *argv[])
 {
-    estrutura_pacote pacote;
+	estrutura_pacote pacote;
 
 	/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
 	/* De um "man" para ver os parametros.*/
@@ -56,50 +56,65 @@ int main(int argc,char *argv[])
 	// recepcao de pacotes
 	while (1) 
 	{		
-        //recv(sockd,(char *) &buff1, sizeof(buff1), 0x0);
-        recv(sockd,(char *) &pacote, sizeof(pacote), 0x0);
+		//recv(sockd,(char *) &buff1, sizeof(buff1), 0x0);
+		recv(sockd,(char *) &pacote, sizeof(pacote), 0x0);
 
-        if(pacote.ethernet_type == ETH_P_IP && pacote.protocol == UDP_PROTOCOL)
-        {
-            printf("IHL: %02x \n", pacote.version);
-			printf("Type of Service: %02x \n", pacote.ihl);
-            printf("Position choosed by player: [%d][%d] \n", pacote.jogada_x, pacote.jogada_y);
-        }
+		if(pacote.ethernet_type == ETH_P_IP && pacote.protocol == UDP_PROTOCOL)
+		{
+			//printf("IHL: %02x \n", pacote.version);
+			//printf("Type of Service: %02x \n", pacote.ihl);
+			printf("Position choosed by player: [%d][%d] \n", pacote.jogada_x, pacote.jogada_y);
 
-        /*
-        //ESTE TRECHO E IMPORTANTE PARA CONFERIR MANUALMENTE A CORRETUDE DOS DADOS
+            //VERIFICA O CHECKSUM
+			unsigned short checksum_recalculated = calcula_checksum(pacote);
+			printf("Checksum (recebido=%d) (recalculado=%d) \n", pacote.checksumip,checksum_recalculated);
+			if(pacote.checksumip == checksum_recalculated)
+			{
+				printf("Checksum correto! =]\n");
+			}
+			else
+			{
+				printf("Checksum incorreto! =[\n");
+			}
+
+            printf("\n");
+		}
+        
+
+		/*
+		//ESTE TRECHO E IMPORTANTE PARA CONFERIR MANUALMENTE A CORRETUDE DOS DADOS
 		//trata apenas pacotes IP (tipo 0x0800) com UDP (0X11)
 		if(buff1[12] == 8 && buff1[13] == 0 && buff1[23] == 17 && buff1[42] == true)
 		{
-			// impressao do conteudo - exemplo Endereco Destino e Endereco Origem
-			printf("Destination MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", buff1[0],buff1[1],buff1[2],buff1[3],buff1[4],buff1[5]);
-			printf("Source MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", buff1[6],buff1[7],buff1[8],buff1[9],buff1[10],buff1[11]);
-			printf("Ether Type: %02x%02x \n", buff1[12], buff1[13]);
-			printf("Version: %02x \n", buff1[14] >> 4);
-			buff_aux = 0;
-			buff_aux = buff1[14] << 4;
-			buff_aux = buff_aux >> 4;
-			printf("IHL: %02x \n", buff_aux);
-			printf("Type of Service: %02x \n", buff1[15]);
-			printf("Total Length: %02x%02x \n", buff1[16], buff1[17]);
-			printf("Identification: %02x%02x \n", buff1[18], buff1[19]);
-			printf("Flags + Fragment Offset: %02x%02x \n", buff1[20], buff1[21]);
-			printf("Time to Live: %02x \n", buff1[22]);
-			printf("Protocol: %02x \n", buff1[23]);
-			printf("Header Checksum: %02x%02x \n", buff1[24], buff1[25]);
-			printf("Source Address: %02x%02x%02x%02x \n", buff1[26], buff1[27], buff1[28], buff1[29]);
-			printf("Destination Address: %02x%02x%02x%02x \n", buff1[30], buff1[31], buff1[32], buff1[33]);
-			printf("Source Port: %02x%02x \n", buff1[34], buff1[35]);
-			printf("Destination Port: %02x%02x \n", buff1[36], buff1[37]);
-			printf("Length: %02x%02x \n", buff1[38], buff1[39]);
-			printf("Checksum: %02x%02x \n", buff1[40], buff1[41]);
-			buff_aux = buff1[42];
-			printf("Datagram of the game: %s\n", buff_aux ? "true" : "false");
-			buff_aux = buff1[43];
-			position_choosed_by_player = buff_aux - '0';
-			printf("Position choosed by player: %d \n", position_choosed_by_player);
-			printf("\n");
+		// impressao do conteudo - exemplo Endereco Destino e Endereco Origem
+		printf("Destination MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", buff1[0],buff1[1],buff1[2],buff1[3],buff1[4],buff1[5]);
+		printf("Source MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", buff1[6],buff1[7],buff1[8],buff1[9],buff1[10],buff1[11]);
+		printf("Ether Type: %02x%02x \n", buff1[12], buff1[13]);
+		printf("Version: %02x \n", buff1[14] >> 4);
+		buff_aux = 0;
+		buff_aux = buff1[14] << 4;
+		buff_aux = buff_aux >> 4;
+		printf("IHL: %02x \n", buff_aux);
+		printf("Type of Service: %02x \n", buff1[15]);
+		printf("Total Length: %02x%02x \n", buff1[16], buff1[17]);
+		printf("Identification: %02x%02x \n", buff1[18], buff1[19]);
+		printf("Flags + Fragment Offset: %02x%02x \n", buff1[20], buff1[21]);
+		printf("Time to Live: %02x \n", buff1[22]);
+		printf("Protocol: %02x \n", buff1[23]);
+		printf("Header Checksum: %02x%02x \n", buff1[24], buff1[25]);
+		printf("Source Address: %02x%02x%02x%02x \n", buff1[26], buff1[27], buff1[28], buff1[29]);
+		printf("Destination Address: %02x%02x%02x%02x \n", buff1[30], buff1[31], buff1[32], buff1[33]);
+		printf("Source Port: %02x%02x \n", buff1[34], buff1[35]);
+		printf("Destination Port: %02x%02x \n", buff1[36], buff1[37]);
+		printf("Length: %02x%02x \n", buff1[38], buff1[39]);
+		printf("Checksum: %02x%02x \n", buff1[40], buff1[41]);
+		buff_aux = buff1[42];
+		printf("Datagram of the game: %s\n", buff_aux ? "true" : "false");
+		buff_aux = buff1[43];
+		position_choosed_by_player = buff_aux - '0';
+		printf("Position choosed by player: %d \n", position_choosed_by_player);
+		printf("\n");
 		}      
-        */          
+		 */          
 	}
 }
