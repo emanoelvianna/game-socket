@@ -10,18 +10,16 @@
 #include <net/ethernet.h>
 #include <netinet/ether.h>
 #include <netinet/in.h>
-/* utilizando os utilitarios */
-#include "envio_socket.h"
-
-#define ETHERTYPE_LEN 2
-#define MAC_ADDR_LEN 6
-#define BUFFER_LEN 1518 //TODO: rever o tamanho do buffer!
-#define UDP_PROTOCOL 17
+#include <netinet/udp.h>
+#include <netinet/ip.h> 
+#include <arpa/inet.h>
+#include "estrutura.h"
 
 typedef unsigned char MacAddress[MAC_ADDR_LEN];
 extern int errno;
 unsigned char aux = 0;
-unsigned char jogada;
+unsigned char jogada_x;
+unsigned char jogada_y;
 
 void usage(char* exec) 
 {
@@ -30,13 +28,13 @@ void usage(char* exec)
 
 int main(int argc, char * argv[])
 {
-	if (argc < 3) 
+	if (argc < -1) 
 	{
 		usage(argv[0]);
 	} 
 	else 
 	{
-		struct estrutura_pacote pacote;
+		estrutura_pacote pacote;
 		unsigned char buffer[BUFFER_LEN];
 
 		/* configuracoes para o socket */		   	
@@ -45,9 +43,43 @@ int main(int argc, char * argv[])
 		char dummyBuf[50];
 		short int etherTypeT = htons(0x800);
 
-		/* Configura MAC Origem e Destino */
-		MacAddress localMac = {0x50, 0xB7, 0xC3, 0x42, 0x6F, 0xA1};
-		MacAddress destMac = {0x50, 0xB7, 0xC3, 0x42, 0x6F, 0xA1};
+		/* escrevendo os dados no pacote */        
+        MacAddress localMac = {0x34, 0x97, 0xF6, 0x7D, 0x8D, 0x71};
+        MacAddress destMac = {0x34, 0x97, 0xF6, 0x7D, 0x8D, 0x71};
+        strcpy(pacote.source_ethernet_address, localMac);
+        printf("Destination MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", 
+                                         pacote.source_ethernet_address[0],
+                                         pacote.source_ethernet_address[1],
+                                         pacote.source_ethernet_address[2],
+                                         pacote.source_ethernet_address[3],
+                                         pacote.source_ethernet_address[4],
+                                         pacote.source_ethernet_address[5]);
+        strcpy(pacote.target_ethernet_address, destMac);
+        printf("Destination MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", 
+                                         pacote.target_ethernet_address[0],
+                                         pacote.target_ethernet_address[1],
+                                         pacote.target_ethernet_address[2],
+                                         pacote.target_ethernet_address[3],
+                                         pacote.target_ethernet_address[4],
+                                         pacote.target_ethernet_address[5]);
+        pacote.ethernet_type = ETH_P_IP;
+        pacote.version = 5;
+	    pacote.ihl = 4;
+        pacote.tos = 0;             
+	    pacote.tlen = sizeof (estrutura_pacote); 
+	    pacote.id = htonl (54321);
+	    pacote.flags_offset = 0;
+	    pacote.ttl = 255;
+	    pacote.protocol = UDP_PROTOCOL;
+	    pacote.checksumip = 0;
+        char ip_source[32];
+        strcpy(ip_source , "192.168.1.10");
+        pacote.src = inet_addr (ip_source);
+        char ip_destination[32];
+        strcpy(ip_destination , "192.168.1.10");	    
+	    pacote.dst = inet_addr (ip_destination);
+        pacote.jogada_x = 0;
+        pacote.jogada_y = 2;
 
 		/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
 		if((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) 
@@ -70,21 +102,9 @@ int main(int argc, char * argv[])
 
 		/* Add some data */
 		memcpy((buffer+ETHERTYPE_LEN+(2*MAC_ADDR_LEN)), dummyBuf, 50);
+		
 
-		//CONTINUACAO DOS DADOS NO PACOTE
-		//PROTOCOLO
-		buffer[23] = UDP_PROTOCOL;
-		//SINALIZA QUE O PACOTE É DO JOGO COM O VALOR TRUE
-		buffer[42] = true;
-		//O BYTE 43 CONTÉM A JOGADA (ÍNDICE DA MATRIZ = 9 POSICOES)
-		jogada = '8';
-		buffer[43] = jogada;
-
-		//while(1) 
-		//{
-		/* Envia pacotes de 64 bytes */
-		//if((retValue = sendto(sockFd, buffer, 64, 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0) 
-		if((retValue = sendto(sockFd, buffer, 64, 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0) 			    
+		if((retValue = sendto(sockFd, &pacote, sizeof(pacote), 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0) 			    
 		{
 			printf("ERROR! sendto() \n");
 			exit(1);
@@ -93,8 +113,6 @@ int main(int argc, char * argv[])
 		{
 			printf("Send success (%d).\n", retValue);
 		}
-
-		//}
 
 	}
 }
