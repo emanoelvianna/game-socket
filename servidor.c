@@ -87,6 +87,7 @@ int servidor()
 	unsigned char buffer[BUFFER_SIZE];
 	struct ifreq ifr;
 	char ifname[IFNAMSIZ];
+	int igual = 0;
 
 	strcpy(ifname, input_ifname);
 
@@ -148,11 +149,18 @@ int servidor()
 		/* verifica se é um pacote IPv4 */
 		if (pacote.ethernet_type == ETHERTYPE)
 		{
-			printf("MAC do server: %s\n", mac_server);	
-			printf("MAC do pacote: %s\n", pacote.target_ethernet_address);	
+			printf("MAC do server: %s\n", mac_server);
+			
+			printf("MAC do pacote: %02x%02x%02x%02x%02x%02x\n",
+				pacote.target_ethernet_address[0],
+				pacote.target_ethernet_address[1],
+				pacote.target_ethernet_address[2],
+				pacote.target_ethernet_address[3],
+				pacote.target_ethernet_address[4],
+				pacote.target_ethernet_address[5]);
 
 			/* verifica se o mac destino é o server */
-			if(memcpy(&pacote.target_ethernet_address, mac_server, sizeof(mac_server))  == 0){
+			if(strcmp(pacote.target_ethernet_address, mac_server) != 0){
 				printf("opa mesmo!");
 				/* adicionando jogadores a partida */
 				if(jogador1 == false) {
