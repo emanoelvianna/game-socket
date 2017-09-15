@@ -6,18 +6,16 @@
 #include <sys/ioctl.h>
 #include <string.h>
 #include <unistd.h>
-
-/* Diretorios: net, netinet, linux contem os includes que descrevem */
-/* as estruturas de dados do header dos protocolos   	  	        */
-
 #include <net/if.h>  //estrutura ifr
 #include <netinet/ether.h> //header ethernet
 #include <netinet/in.h> //definicao de protocolos
 #include <arpa/inet.h> //funcoes para manipulacao de enderecos IP
-
+#include<netinet/udp.h>
+#include<netinet/ip.h> 
+#include<netinet/tcp.h>
+#include <arpa/inet.h>
 #include <netinet/in_systm.h> //tipos de dados
-
-#define BUFFSIZE 1518
+#include "estrutura.h"
 
 // Atencao!! Confira no /usr/include do seu sisop o nome correto
 // das estruturas de dados dos protocolos.
@@ -25,6 +23,8 @@
 unsigned char buff1[BUFFSIZE]; // buffer de recepcao
 unsigned char buff_aux;
 int position_choosed_by_player = 0;
+unsigned char jogada_x;
+unsigned char jogada_y;
 
 int sockd;
 int on;
@@ -32,6 +32,8 @@ struct ifreq ifr;
 
 int main(int argc,char *argv[])
 {
+    estrutura_pacote pacote;
+
 	/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
 	/* De um "man" para ver os parametros.*/
 	/* htons: converte um short (2-byte) integer para standard network byte order. */
@@ -42,7 +44,7 @@ int main(int argc,char *argv[])
 	}
 
 	// O procedimento abaixo eh utilizado para "setar" a interface em modo promiscuo
-	strcpy(ifr.ifr_name, "enp2s0");
+	strcpy(ifr.ifr_name, "enp0s31f6");
 	if(ioctl(sockd, SIOCGIFINDEX, &ifr) < 0)
 	{	
 		//printf("erro no ioctl!");
@@ -53,9 +55,19 @@ int main(int argc,char *argv[])
 
 	// recepcao de pacotes
 	while (1) 
-	{
-		recv(sockd,(char *) &buff1, sizeof(buff1), 0x0);
+	{		
+        //recv(sockd,(char *) &buff1, sizeof(buff1), 0x0);
+        recv(sockd,(char *) &pacote, sizeof(pacote), 0x0);
 
+        if(pacote.ethernet_type == ETH_P_IP && pacote.protocol == UDP_PROTOCOL)
+        {
+            printf("IHL: %02x \n", pacote.version);
+			printf("Type of Service: %02x \n", pacote.ihl);
+            printf("Position choosed by player: [%d][%d] \n", pacote.jogada_x, pacote.jogada_y);
+        }
+
+        /*
+        //ESTE TRECHO E IMPORTANTE PARA CONFERIR MANUALMENTE A CORRETUDE DOS DADOS
 		//trata apenas pacotes IP (tipo 0x0800) com UDP (0X11)
 		if(buff1[12] == 8 && buff1[13] == 0 && buff1[23] == 17 && buff1[42] == true)
 		{
@@ -87,6 +99,7 @@ int main(int argc,char *argv[])
 			position_choosed_by_player = buff_aux - '0';
 			printf("Position choosed by player: %d \n", position_choosed_by_player);
 			printf("\n");
-		}                
+		}      
+        */          
 	}
 }
