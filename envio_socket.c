@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
@@ -35,7 +36,7 @@ int main(int argc, char * argv[])
 	else 
 	{
 		estrutura_pacote pacote;
-		unsigned char buffer[BUFFER_LEN];
+		unsigned char buffer[BUFFER_LEN];        
 
 		/* configuracoes para o socket */		   	
 		int sockFd = 0, retValue = 0; 
@@ -43,43 +44,47 @@ int main(int argc, char * argv[])
 		char dummyBuf[50];
 		short int etherTypeT = htons(0x800);
 
-		/* escrevendo os dados no pacote */        
-        MacAddress localMac = {0x34, 0x97, 0xF6, 0x7D, 0x8D, 0x71};
-        MacAddress destMac = {0x34, 0x97, 0xF6, 0x7D, 0x8D, 0x71};
-        strcpy(pacote.source_ethernet_address, localMac);
-        printf("Destination MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", 
-                                         pacote.source_ethernet_address[0],
-                                         pacote.source_ethernet_address[1],
-                                         pacote.source_ethernet_address[2],
-                                         pacote.source_ethernet_address[3],
-                                         pacote.source_ethernet_address[4],
-                                         pacote.source_ethernet_address[5]);
-        strcpy(pacote.target_ethernet_address, destMac);
-        printf("Destination MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", 
-                                         pacote.target_ethernet_address[0],
-                                         pacote.target_ethernet_address[1],
-                                         pacote.target_ethernet_address[2],
-                                         pacote.target_ethernet_address[3],
-                                         pacote.target_ethernet_address[4],
-                                         pacote.target_ethernet_address[5]);
-        pacote.ethernet_type = ETH_P_IP;
-        pacote.version = 5;
-	    pacote.ihl = 4;
-        pacote.tos = 0;             
-	    pacote.tlen = sizeof (estrutura_pacote); 
-	    pacote.id = htonl (54321);
-	    pacote.flags_offset = 0;
-	    pacote.ttl = 255;
-	    pacote.protocol = UDP_PROTOCOL;
-	    pacote.checksumip = 0;
-        char ip_source[32];
-        strcpy(ip_source , "192.168.1.10");
-        pacote.src = inet_addr (ip_source);
-        char ip_destination[32];
-        strcpy(ip_destination , "192.168.1.10");	    
-	    pacote.dst = inet_addr (ip_destination);
-        pacote.jogada_x = 0;
-        pacote.jogada_y = 2;
+		/* MONTANDO PACOTE - INICIO */        
+		MacAddress localMac = {0x34, 0x97, 0xF6, 0x7D, 0x8D, 0x71};
+		MacAddress destMac = {0x34, 0x97, 0xF6, 0x7D, 0x8D, 0x71};
+		strcpy(pacote.source_ethernet_address, localMac);
+		printf("Destination MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", 
+				pacote.source_ethernet_address[0],
+				pacote.source_ethernet_address[1],
+				pacote.source_ethernet_address[2],
+				pacote.source_ethernet_address[3],
+				pacote.source_ethernet_address[4],
+				pacote.source_ethernet_address[5]);
+		strcpy(pacote.target_ethernet_address, destMac);
+		printf("Destination MAC Address: %02x:%02x:%02x:%02x:%02x:%02x \n", 
+				pacote.target_ethernet_address[0],
+				pacote.target_ethernet_address[1],
+				pacote.target_ethernet_address[2],
+				pacote.target_ethernet_address[3],
+				pacote.target_ethernet_address[4],
+				pacote.target_ethernet_address[5]);
+		pacote.ethernet_type = ETH_P_IP;
+		pacote.version = 5;
+		pacote.ihl = 4;
+		pacote.tos = 0;             
+		pacote.tlen = sizeof (estrutura_pacote); 
+		pacote.id = htonl (54321);
+		pacote.flags_offset = 0;
+		pacote.ttl = 255;
+		pacote.protocol = UDP_PROTOCOL;
+		pacote.checksumip = 0;
+		char ip_source[32];
+		strcpy(ip_source , "192.168.1.10");
+		pacote.src = inet_addr (ip_source);
+		char ip_destination[32];
+		strcpy(ip_destination , "192.168.1.10");	    
+		pacote.dst = inet_addr (ip_destination);
+        srand(time(NULL));
+		pacote.jogada_x = rand() % 3;
+		pacote.jogada_y = rand() % 3;
+        pacote.checksumip = calcula_checksum(pacote);
+		printf("Checksum: %d \n", pacote.checksumip);
+        /* MONTANDO PACOTE - FIM */  
 
 		/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
 		if((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0) 
@@ -102,7 +107,7 @@ int main(int argc, char * argv[])
 
 		/* Add some data */
 		memcpy((buffer+ETHERTYPE_LEN+(2*MAC_ADDR_LEN)), dummyBuf, 50);
-		
+
 
 		if((retValue = sendto(sockFd, &pacote, sizeof(pacote), 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0) 			    
 		{
