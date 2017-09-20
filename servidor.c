@@ -55,7 +55,7 @@ void adicionarJogada(int linha, int coluna, char peca)
   }
 }
 
-/* metodo auxiliar para buscar o mac do server */
+/* metodo auxiliar para buscar o endereço mac da maquina */
 int getMac() 
 {
 	int fd;

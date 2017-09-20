@@ -20,26 +20,9 @@ unsigned char aux = 0;
 unsigned char jogada_x;
 unsigned char jogada_y;
 
-/* metodo auxiliar para buscar o mac do server */
-int getMac()
-{
-	int fd;
-	struct ifreq ifr;
-
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
-	ifr.ifr_addr.sa_family = AF_INET;
-	strncpy(ifr.ifr_name, input_ifname, IFNAMSIZ - 1);
-	ioctl(fd, SIOCGIFHWADDR, &ifr);
-	close(fd);
-
-	strcpy(mac_local, ifr.ifr_hwaddr.sa_data);
-
-	return 0;
-}
-
 void usage(char *exec)
 {
-	printf("%s <interface de rede local> <endereço mac servidor> <porta>\n", exec);
+	printf("%s <endereço mac local> <endereço mac servidor> <porta>\n", exec);
 }
 
 int main(int argc, char *argv[])
@@ -53,36 +36,19 @@ int main(int argc, char *argv[])
 		estrutura_pacote pacote;
 		unsigned char buffer[BUFFER_LEN];
 
-		/* obtendo interface de rede */
-		input_ifname = argv[1];
-		/* obtendo o mac local */
-		getMac();
-
 		/* configuracoes para o socket */
 		int sockFd = 0, retValue = 0;
 		struct sockaddr_ll destAddr;
 		char dummyBuf[50];
 		short int etherTypeT = htons(0x800);
 
+		printf("Mac origem: %s\n", argv[1]);
+		printf("Mac destino: %s\n", argv[2]);
+		printf("Porta do servidor: %s\n", argv[3]);
+
 		/* montando o pacote IPv4 - inicio */
-		strcpy(pacote.source_ethernet_address, mac_local);
-		printf("Mac origem: %02x%02x%02x%02x%02x%02x\n",
-			   pacote.source_ethernet_address[0],
-			   pacote.source_ethernet_address[1],
-			   pacote.source_ethernet_address[2],
-			   pacote.source_ethernet_address[3],
-			   pacote.source_ethernet_address[4],
-			   pacote.source_ethernet_address[5]);
-
+		strcpy(pacote.source_ethernet_address, argv[1]);
 		strcpy(pacote.target_ethernet_address, argv[2]);
-		printf("Mac destion: %02x%02x%02x%02x%02x%02x\n",
-			   pacote.target_ethernet_address[0],
-			   pacote.target_ethernet_address[1],
-			   pacote.target_ethernet_address[2],
-			   pacote.target_ethernet_address[3],
-			   pacote.target_ethernet_address[4],
-			   pacote.target_ethernet_address[5]);
-
 		pacote.ethernet_type = ETH_P_IP;
 		pacote.version = 5;
 		pacote.ihl = 4;
