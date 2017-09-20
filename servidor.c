@@ -14,7 +14,7 @@
 /* definindo a porta de conexão  */
 #define PORT 4242
 /* definicao do tamanho do buffer */
-#define BUFFER_LENGTH 1500
+#define BUFFSIZE 1518
 /* definicao do tamanho da matriz */
 #define N_LINHAS 3
 #define N_COLUNAS 3
@@ -82,71 +82,96 @@ int getMacServer()
 
 /* metodo para o servidor */
 int servidor() 
-{     
-    /* Client and Server socket structures */
-    struct sockaddr_in client, server;
+{
+	int fd;
+	unsigned char buffer[BUFFER_SIZE];
+	struct ifreq ifr;
+	char ifname[IFNAMSIZ];
+	int igual = 0;
 
-    /* File descriptors of client and server */
-    int serverfd, clientfd;
-	char buffer[BUFFER_LENGTH];
+	strcpy(ifname, input_ifname);
 
-    fprintf(stdout, "Iniciando o server para o game\n");
+	/* Cria um descritor de socket do tipo RAW */
+	fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+	if (fd < 0)
+	{
+		fprintf(stderr, "Erro ao tentar criar o socket!");
+		exit(1);
+	}
 
-    /* Cria um descritor de socket do tipo RAW */
-    serverfd = socket(AF_INET, SOCK_STREAM, 0);
-    if(serverfd == -1) {
-        perror("Problema ao criar o socket:");
-        return EXIT_FAILURE;
-    }
+	/* Obtem o indice da interface de rede */
+	strcpy(ifr.ifr_name, ifname);
+	if (ioctl(fd, SIOCGIFINDEX, &ifr) < 0)
+	{
+		perror("ioctl");
+		exit(1);
+	}
 
-    /* Preparando configurações para o server */
-    server.sin_family = AF_INET;
-    server.sin_port = htons(PORT);
-    memset(server.sin_zero, 0x0, 8);
+	/* Obtem as flags da interface */
+	if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0)
+	{
+		perror("ioctl");
+		exit(1);
+	}
 
-	/* bind do socket para a porta */
-    if(bind(serverfd, (struct sockaddr*)&server, sizeof(server)) == -1 ) {
-        perror("Socket bind erro:");
-        return EXIT_FAILURE;
-    }
+	/* Coloca a interface em modo promiscuo */
+	ifr.ifr_flags |= IFF_PROMISC;
+	if (ioctl(fd, SIOCSIFFLAGS, &ifr) < 0)
+	{
+		perror("ioctl");
+		exit(1);
+	}
 
-	puts("Esperando jogadores ... \n");
-   /* Sends the message to the client */
-    if (send(clientfd, buffer, strlen(buffer), 0)) {
-        fprintf(stdout, "Client connected.\nWaiting for client message ...\n");
+	if(jogador1 == false && jogador2 == false){
+		printf(" Esperando jogadores ... \n");
+	}
 
-        /* Communicates with the client until bye message come */
-        do {
+	while(1) {
 
-            /* Zeroing buffers */
-            memset(buffer, 0x0, BUFFER_LENGTH);
+		struct estrutura_pacote pacote;
 
-            /* Receives client message */
-            int message_len;
-            if((message_len = recv(clientfd, buffer, BUFFER_LENGTH, 0)) > 0) {
-                buffer[message_len - 1] = '\0';
-                printf("Client says: %s\n", buffer);
-            }
+		/* Recebe pacotes */
+		if (recv(fd, (char *)&buffer, BUFFER_SIZE, 0) < 0)
+		{
+			perror("recv");
+			close(fd);
+			exit(1);
+		}
 
+		/* Copia o conteudo dos protocolos Ethernet, IPv4 e UDP */
+		memcpy(&pacote, buffer, sizeof(buffer));
+		pacote.ethernet_type = ntohs(pacote.ethernet_type);
 
-            /* 'bye' message finishes the connection */
-            if(strcmp(buffer, "bye") == 0) {
-                send(clientfd, "bye", 3, 0);
-            } else {
-                send(clientfd, "yep\n", 4, 0);
-            }
+		//TODO: verificar se o pacote trafegado é de um jogador
+		//TODO: verificar se é um pacote udp
+		//TODO: capturar jogada e adicionar a matriz
 
-        } while(strcmp(buffer, "bye"));
-    }
+		/* verifica se é um pacote IPv4 */
+		if (pacote.ethernet_type == ETHERTYPE)
+		{
+			printf("MAC do server: %s\n", mac_server);
+			
+			printf("MAC do pacote: %02x%02x%02x%02x%02x%02x\n",
+				pacote.target_ethernet_address[0],
+				pacote.target_ethernet_address[1],
+				pacote.target_ethernet_address[2],
+				pacote.target_ethernet_address[3],
+				pacote.target_ethernet_address[4],
+				pacote.target_ethernet_address[5]);
 
-    /* Client connection Close */
-    close(clientfd);
-    /* Close the local socket */
-    close(serverfd);
-     
-    return 0;
+			/* verifica se o mac destino é o server */
+			if(strcmp(pacote.target_ethernet_address, mac_server) != 0){
+				printf("opa mesmo!");
+				/* adicionando jogadores a partida */
+				if(jogador1 == false) {
+					jogador1 = true;	
+				} else if(jogador2 == false) {
+					jogador2 = true;
+				}
+			}
+		}
 
-
+	}
 }
 
 /* metodo para realizar validação sobre entrada do usuario */
