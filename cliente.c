@@ -1,35 +1,50 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <netinet/ether.h>
+#include <arpa/inet.h>
+#include <linux/if_packet.h>
 #include <stdbool.h>
 #include <time.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <linux/if_ether.h>
-#include <netpacket/packet.h>
-#include <net/ethernet.h>
-#include <netinet/ether.h>
-#include <netinet/in.h>
-#include <netinet/udp.h>
-#include <netinet/ip.h>
-#include <arpa/inet.h>
+/* utilizando os utilitarios */
 #include "estrutura.h"
 
-typedef unsigned char MacAddress[ETHERNET_ADDR_LEN];
+char *input_ifname;
+unsigned char mac_local[ETHERNET_ADDR_LEN];
+unsigned char mac_server[ETHERNET_ADDR_LEN];
 extern int errno;
 unsigned char aux = 0;
 unsigned char jogada_x;
 unsigned char jogada_y;
 
+/* metodo auxiliar para buscar o mac do server */
+int getMac()
+{
+	int fd;
+	struct ifreq ifr;
+
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	ifr.ifr_addr.sa_family = AF_INET;
+	strncpy(ifr.ifr_name, input_ifname, IFNAMSIZ - 1);
+	ioctl(fd, SIOCGIFHWADDR, &ifr);
+	close(fd);
+
+	strcpy(mac_local, ifr.ifr_hwaddr.sa_data);
+
+	return 0;
+}
+
 void usage(char *exec)
 {
-	printf("%s <Ip> <Porta>\n", exec);
+	printf("%s <interface de rede local> <endereço mac servidor> <porta>\n", exec);
 }
 
 int main(int argc, char *argv[])
 {
-	if (argc < -1)
+	if (argc < 3)
 	{
 		usage(argv[0]);
 	}
@@ -38,6 +53,11 @@ int main(int argc, char *argv[])
 		estrutura_pacote pacote;
 		unsigned char buffer[BUFFER_LEN];
 
+		/* obtendo interface de rede */
+		input_ifname = argv[1];
+		/* obtendo o mac local */
+		getMac();
+
 		/* configuracoes para o socket */
 		int sockFd = 0, retValue = 0;
 		struct sockaddr_ll destAddr;
@@ -45,10 +65,24 @@ int main(int argc, char *argv[])
 		short int etherTypeT = htons(0x800);
 
 		/* montando o pacote IPv4 - inicio */
-		MacAddress localMac = {0x34, 0x97, 0xF6, 0x7D, 0x8D, 0x71};
-		MacAddress destMac = {0x34, 0x97, 0xF6, 0x7D, 0x8D, 0x71};
-		strcpy(pacote.source_ethernet_address, localMac);
-		strcpy(pacote.target_ethernet_address, destMac);
+		strcpy(pacote.source_ethernet_address, mac_local);
+		printf("Mac origem: %02x%02x%02x%02x%02x%02x\n",
+			   pacote.source_ethernet_address[0],
+			   pacote.source_ethernet_address[1],
+			   pacote.source_ethernet_address[2],
+			   pacote.source_ethernet_address[3],
+			   pacote.source_ethernet_address[4],
+			   pacote.source_ethernet_address[5]);
+
+		strcpy(pacote.target_ethernet_address, argv[2]);
+		printf("Mac destion: %02x%02x%02x%02x%02x%02x\n",
+			   pacote.target_ethernet_address[0],
+			   pacote.target_ethernet_address[1],
+			   pacote.target_ethernet_address[2],
+			   pacote.target_ethernet_address[3],
+			   pacote.target_ethernet_address[4],
+			   pacote.target_ethernet_address[5]);
+
 		pacote.ethernet_type = ETH_P_IP;
 		pacote.version = 5;
 		pacote.ihl = 4;
@@ -84,11 +118,11 @@ int main(int argc, char *argv[])
 		destAddr.sll_protocol = htons(ETH_P_ALL);
 		destAddr.sll_halen = 6;
 		destAddr.sll_ifindex = 2; /* indice da interface pela qual os pacotes serao enviados. Eh necess�rio conferir este valor. */
-		memcpy(&(destAddr.sll_addr), destMac, ETHERNET_ADDR_LEN);
+		memcpy(&(destAddr.sll_addr), pacote.target_ethernet_address, ETHERNET_ADDR_LEN);
 
 		/* Cabecalho Ethernet */
-		memcpy(buffer, destMac, ETHERNET_ADDR_LEN);
-		memcpy((buffer + ETHERNET_ADDR_LEN), localMac, ETHERNET_ADDR_LEN);
+		memcpy(buffer, pacote.target_ethernet_address, ETHERNET_ADDR_LEN);
+		memcpy((buffer + ETHERNET_ADDR_LEN), mac_local, ETHERNET_ADDR_LEN);
 		memcpy((buffer + (2 * ETHERNET_ADDR_LEN)), &(etherTypeT), sizeof(etherTypeT));
 
 		/* Add some data */

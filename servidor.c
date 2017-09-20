@@ -56,9 +56,9 @@ void adicionarJogada(int linha, int coluna, char peca)
 }
 
 /* metodo auxiliar para buscar o mac do server */
-int getMacServer() 
+int getMac() 
 {
-		int fd;
+	int fd;
     struct ifreq ifr;
      
     fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -141,19 +141,16 @@ int servidor()
 		/* verifica se é um pacote IPv4 */
 		if (pacote.ethernet_type == ETHERTYPE)
 		{
-			printf("MAC do server: %s\n", mac_server);
-			
-			printf("MAC do pacote: %02x%02x%02x%02x%02x%02x\n",
-				pacote.target_ethernet_address[0],
-				pacote.target_ethernet_address[1],
-				pacote.target_ethernet_address[2],
-				pacote.target_ethernet_address[3],
-				pacote.target_ethernet_address[4],
-				pacote.target_ethernet_address[5]);
-
 			/* verifica se o mac destino é o server */
 			if(strcmp(pacote.target_ethernet_address, mac_server) != 0){
-				printf("opa mesmo!");
+				printf("MAC do pacote: %02x%02x%02x%02x%02x%02x\n",
+					pacote.target_ethernet_address[0],
+					pacote.target_ethernet_address[1],
+					pacote.target_ethernet_address[2],
+					pacote.target_ethernet_address[3],
+					pacote.target_ethernet_address[4],
+					pacote.target_ethernet_address[5]);
+					
 				/* adicionando jogadores a partida */
 				if(jogador1 == false) {
 					jogador1 = true;	
@@ -174,7 +171,7 @@ void usage(char *exec)
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2)
+    if (argc < 1)
     {
 			usage(argv[0]);
     }
@@ -183,7 +180,7 @@ int main(int argc, char *argv[])
 			/* obtendo interface de rede */
 			input_ifname = argv[1];
 			/* obtendo o mac do servidor */
-			strcpy(mac_server, argv[2]);
+			getMac();
    
 			/* rodando o servidor para iniciar o game */
 			servidor();
