@@ -27,7 +27,7 @@ void usage(char *exec)
 
 int main(int argc, char *argv[])
 {
-	if (argc < 3)
+	if (argc < 4)
 	{
 		usage(argv[0]);
 	}
@@ -45,6 +45,11 @@ int main(int argc, char *argv[])
 		printf("Mac origem: %s\n", argv[1]);
 		printf("Mac destino: %s\n", argv[2]);
 		printf("Porta do servidor: %s\n", argv[3]);
+
+		/* montando o cabecalho Ethernet */
+		memcpy(buffer, pacote.target_ethernet_address, ETHERNET_ADDR_LEN);
+		memcpy((buffer + ETHERNET_ADDR_LEN), mac_local, ETHERNET_ADDR_LEN);
+		memcpy((buffer + (2 * ETHERNET_ADDR_LEN)), &(etherTypeT), sizeof(etherTypeT));
 
 		/* montando o pacote IPv4 - inicio */
 		strcpy(pacote.source_ethernet_address, argv[1]);
@@ -72,6 +77,10 @@ int main(int argc, char *argv[])
 		printf("Checksum: %d \n", pacote.checksumip);
 		/* montando o pacote IPv4 - fim */
 
+		/* montando o pacote UDP - inicio */
+
+		/* montando o pacote UDP - fim */
+
 		/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
 		if ((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0)
 		{
@@ -85,11 +94,6 @@ int main(int argc, char *argv[])
 		destAddr.sll_halen = 6;
 		destAddr.sll_ifindex = 2; /* indice da interface pela qual os pacotes serao enviados. Eh necess�rio conferir este valor. */
 		memcpy(&(destAddr.sll_addr), pacote.target_ethernet_address, ETHERNET_ADDR_LEN);
-
-		/* Cabecalho Ethernet */
-		memcpy(buffer, pacote.target_ethernet_address, ETHERNET_ADDR_LEN);
-		memcpy((buffer + ETHERNET_ADDR_LEN), mac_local, ETHERNET_ADDR_LEN);
-		memcpy((buffer + (2 * ETHERNET_ADDR_LEN)), &(etherTypeT), sizeof(etherTypeT));
 
 		/* Add some data */
 		memcpy((buffer + ETHERTYPE_LEN + (2 * ETHERNET_ADDR_LEN)), dummyBuf, 50);
