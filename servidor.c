@@ -11,14 +11,6 @@
 /* utilizando os utilitarios */
 #include "estrutura.h"
 
-/* definindo a porta de conexão  */
-#define PORT 4242
-/* definicao do tamanho do buffer */
-#define BUFFSIZE 1518
-/* definicao do tamanho da matriz */
-#define N_LINHAS 3
-#define N_COLUNAS 3
-
 char matriz [N_LINHAS][N_COLUNAS];
 char *input_ifname;
 unsigned char mac_server[ETHERNET_ADDR_LEN];
@@ -128,7 +120,7 @@ int servidor()
 
 	while(1) {
 
-		struct estrutura_pacote pacote;
+		estrutura_pacote pacote;
 
 		/* Recebe pacotes */
 		if (recv(fd, (char *)&buffer, BUFFER_SIZE, 0) < 0)

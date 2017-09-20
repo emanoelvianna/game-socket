@@ -1,10 +1,10 @@
-all:			envio_socket servidor
+all:			cliente servidor
 
-envio_socket:   envio_socket.c
-			gcc envio_socket.c -o envio
+cliente:   	cliente.c
+			gcc cliente.c -o envio
 
 servidor:	servidor.c
 			gcc servidor.c -o servidor
 
 clean:
-			rm -f envio servidor *~
+			rm -f cliente servidor *~
