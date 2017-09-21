@@ -120,4 +120,53 @@ void verifica_check_sum(estrutura_pacote pacote_aux)
             }
 }
 
+bool envia_pacote_aux(estrutura_pacote pacote)
+{
+	unsigned char buffer[BUFFER_SIZE];
+
+	//configuracoes para o socket
+	int sockFd = 0, retValue = 0;
+	struct sockaddr_ll destAddr;
+	char dummyBuf[50];
+	short int etherTypeT = htons(0x800);		
+
+	//Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet
+	if ((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0)
+	{
+		//ERRO NA CRIACAO DO SOCKET
+		return false;
+	}
+
+	//Identicacao de qual maquina (MAC) deve receber a mensagem enviada no socket.
+	destAddr.sll_family = htons(PF_PACKET);
+	destAddr.sll_protocol = htons(ETH_P_ALL);
+	destAddr.sll_halen = 6;
+	destAddr.sll_ifindex = 2; /* indice da interface pela qual os pacotes serao enviados. Eh necess�rio conferir este valor. */
+	memcpy(&(destAddr.sll_addr), pacote.target_ethernet_address, ETHERNET_ADDR_LEN);
+
+	if ((retValue = sendto(sockFd, &pacote, sizeof(pacote), 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0)
+	{
+		//O PACOTE NAO FOI ENVIADO
+		return false;
+	}
+	else
+	{
+		//O PACOTE FOI ENVIADO
+        return true;
+	}
+}
+
+/* tenta enviar pacote ate conseguir */
+bool envia_pacote(estrutura_pacote pacote)
+{
+    bool pacote_foi_enviado = envia_pacote_aux(pacote);
+
+    while(pacote_foi_enviado == false)
+    {
+        pacote_foi_enviado = envia_pacote_aux(pacote); 
+    }
+
+    return true;
+}
+
 #endif
