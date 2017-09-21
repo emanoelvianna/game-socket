@@ -2,20 +2,19 @@
 #define HEADER_MASTER
 /* declaracao das constantes */
 
-/* definindo a porta de conexão  */
-#define PORT 4242
-/* definicao do tamanho do buffer */
-#define BUFFSIZE 1518
+#define PORT 4242 /* definindo a porta de conexão  */
+#define BUFFER_SIZE 1500 /* definicao do tamanho do buffer */
+
 /* definicao do tamanho da matriz */
 #define N_LINHAS 3
 #define N_COLUNAS 3
-#define BUFFER_LEN 1500
+
 #define ETHERNET_ADDR_LEN 6 /* indicando o tamanho do mac endereco fisico */
+#define IP_ADDR_LEN 4 /* indicando o tamanho do mac endereco logico */
 #define ETHERTYPE_LEN 2
-#define IP_ADDR_LEN 4       /* indicando o tamanho do mac endereco logico */
-#define UDP_PROTOCOL 17	 
-#define ETHERTYPE 0x0800 /** indicando que é do tipo IPv4 **/
-#define BUFFER_SIZE 1500 /** tamanho do buffer de leitura do pacote ethernet+ipv4+udp **/
+#define UDP_PROTOCOL 17
+#define ETHERTYPE 0x0800 /* indicando que é do tipo IPv4 */	 
+#define UDP_PACKAGE_SIZE 50 /* definicao do tamanho do dado UDP */
 
 /* tamanho dos dados do pacote ethernet + ip */
 const int SIZE_PACOTE_IP = (5 * sizeof(unsigned char)) + (4 * sizeof(unsigned short)) + (2 * sizeof(unsigned int)) + (2 * ETHERNET_ADDR_LEN * sizeof(unsigned char)) + (1 * sizeof(unsigned short));
@@ -99,9 +98,9 @@ unsigned short in_cksum(unsigned short *addr,int len)
 
 unsigned short calcula_checksum(estrutura_pacote pacote_aux)
 {
-    char datagrama[BUFFSIZE];
-	memset (datagrama, 0, BUFFSIZE);
-	memcpy(datagrama, &pacote_aux, sizeof(BUFFSIZE));
+    char datagrama[BUFFER_SIZE];
+	memset (datagrama, 0, BUFFER_SIZE);
+	memcpy(datagrama, &pacote_aux, sizeof(BUFFER_SIZE));
 	return (unsigned short) in_cksum( (unsigned short*) datagrama, SIZE_PACOTE_IP);
 }
 

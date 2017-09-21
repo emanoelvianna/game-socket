@@ -15,10 +15,6 @@ char matriz[N_LINHAS][N_COLUNAS];
 char *input_ifname;
 unsigned char mac_server[ETHERNET_ADDR_LEN];
 
-/* definição dos jogadores  */
-bool jogador1 = false;
-bool jogador2 = false;
-
 /* metodo para incializar a matriz vazia */
 void iniciarMatriz()
 {
@@ -76,6 +72,45 @@ int getMac()
 	return 0;
 }
 
+/* metodo para envio de mensagem para cliente */
+void enviarMensagem(unsigned char *mac_destino)
+{
+	int sockFd = 0, retValue = 0;
+	char buffer[BUFFER_SIZE], dummyBuf[50];
+	struct sockaddr_ll destAddr;
+	short int etherTypeT = htons(0x8200);
+
+	/* htons: converte um short (2-byte) integer para standard network byte order. */
+	if ((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0)
+	{
+		printf("Erro na criacao do socket para enviar mensagem.\n");
+		exit(1);
+	}
+
+	/* Identicacao de qual maquina (MAC) deve receber a mensagem enviada no socket. */
+	destAddr.sll_family = htons(PF_PACKET);
+	destAddr.sll_protocol = htons(ETH_P_ALL);
+	destAddr.sll_halen = 6;
+	destAddr.sll_ifindex = 2; /* indice da interface pela qual os pacotes serao enviados. Eh necess�rio conferir este valor. */
+	memcpy(&(destAddr.sll_addr), mac_destino, ETHERNET_ADDR_LEN);
+
+	/* Cabecalho Ethernet */
+	memcpy(buffer, mac_destino, ETHERNET_ADDR_LEN);
+	memcpy((buffer + ETHERNET_ADDR_LEN), mac_server, ETHERNET_ADDR_LEN);
+	memcpy((buffer + (2 * ETHERNET_ADDR_LEN)), &(etherTypeT), sizeof(etherTypeT));
+
+	/* Add some data */
+	memcpy((buffer + ETHERTYPE_LEN + (2 * ETHERNET_ADDR_LEN)), dummyBuf, 50);
+
+	/* Envia pacotes de 64 bytes */
+	if ((retValue = sendto(sockFd, buffer, 64, 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0)
+	{
+		printf("ERROR! sendto() \n");
+		exit(1);
+	}
+	printf("Send success (%d).\n", retValue);
+}
+
 /* metodo para o servidor */
 int servidor()
 {
@@ -84,6 +119,10 @@ int servidor()
 	struct ifreq ifr;
 	char ifname[IFNAMSIZ];
 	int igual = 0;
+
+	/* definição dos jogadores  */
+	bool jogador1 = false;
+	bool jogador2 = false;
 
 	strcpy(ifname, input_ifname);
 
@@ -136,27 +175,38 @@ int servidor()
 			/* verifica se o mac destino é o server */
 			if (strcmp(pacote.target_ethernet_address, mac_server) != 0)
 			{
-				printf("Servidor: Jogador entrou na partida!\n");
-				printf("MAC do pacote: %s\n", pacote.target_ethernet_address);
-
 				/* adicionando jogadores a partida */
 				if (jogador1 == false)
 				{
 					jogador1 = true;
+					printf("Servidor: Jogador 1 entrou na partida!\n");
+					printf("MAC do jogador 1: %s\n", pacote.source_ethernet_address);
+					/* enviando mensagem ao jogador*/
+					//enviarMensagem(pacote.source_ethernet_address);
 				}
 				else if (jogador2 == false)
 				{
 					jogador2 = true;
+					printf("Servidor: Jogador 2 entrou na partida!\n");
+					printf("MAC do jogador 2: %s\n", pacote.source_ethernet_address);
+					/* enviando mensagem ao jogador*/
+					//enviarMensagem(pacote.source_ethernet_address);
+				}
+				else
+				{
+					printf("Servidor: Quantidade de jogadores já ultrapassada!\n");
 				}
 			}
 		}
 	}
+
+	close(fd);
 }
 
 /* metodo para realizar validação sobre entrada do usuario */
 void usage(char *exec)
 {
-	printf("%s <interface de rede> <porta>\n", exec);
+	printf("%s <interface de rede>\n", exec);
 }
 
 int main(int argc, char *argv[])
@@ -171,7 +221,6 @@ int main(int argc, char *argv[])
 		input_ifname = argv[1];
 		/* obtendo o mac do servidor */
 		getMac();
-
 		/* rodando o servidor para iniciar o game */
 		servidor();
 	}
