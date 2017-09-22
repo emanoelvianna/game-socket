@@ -23,102 +23,6 @@ unsigned char jogada_y;
 char matriz[N_LINHAS][N_COLUNAS];
 bool isRunning = true;
 
-/*
-void jogada()
-{
-    int jogada_linha;
-    int jogada_coluna;
-
-    printf("jogar:[linha][coluna] ");
-    scanf("%d %d", &jogada_linha, &jogada_coluna);
-
-    while(! (jogada_valida(jogada_linha, jogada_coluna)) )
-    {
-        printf("jogada invalida! digite outra coordenada\n");
-        printf("jogar:[linha][coluna] ");
-        scanf("%d %d", &jogada_linha, &jogada_coluna);
-        printf("jogada escolhida:[%d][%d]\n", jogada_linha, jogada_coluna);
-    }
-    printf("jogada valida!!!\n");
-    //INT + '0' = CONVERTE INT PARA CHAR
-    jogada_x = jogada_linha + '0';
-    jogada_y = jogada_coluna + '0';
-    printf("jogada escolhida:[%c][%c]\n", jogada_x, jogada_y);
-}
-*/
-
-void enviar_jogada()
-{
-    //define jogada
-    //jogada();
-
-    estrutura_pacote pacote;
-	/* configuracoes para o socket */
-	struct sockaddr_in server;
-	int len = sizeof(server);
-	int sockFd; 
-	int retValue;
-	struct sockaddr_ll destAddr;
-	int slen;
-	/* buffer de entrada da mensagem do servidor */
-	char buffer_in[BUFFER_SIZE];
-
-	//MONTANDO O PACOTE ETHERNET
-	strcpy(pacote.source_ethernet_address, mac_local);
-	strcpy(pacote.target_ethernet_address, mac_servidor);
-	pacote.ethernet_type = ETH_P_IP;
-	//MONTANDO O PACOTE IPV4
-	pacote.version = 5;
-	pacote.ihl = 4;
-	pacote.tos = 0;
-	pacote.tlen = sizeof(estrutura_pacote);
-	pacote.id = htonl(54321);
-	pacote.flags_offset = 0;
-	pacote.ttl = 255;
-	pacote.protocol = UDP_PROTOCOL;
-	pacote.checksumip = 0;
-	char ip_source[32];
-	strcpy(ip_source, "192.168.1.10");
-	pacote.src = inet_addr(ip_source);
-	char ip_destination[32];
-	strcpy(ip_destination, "192.168.1.10");
-	pacote.dst = inet_addr(ip_destination);
-	pacote.checksumip = calcula_checksum(pacote);
-	printf("Checksum: %d \n", pacote.checksumip);
-	//MONTANDO O PACOTE UDP
-    pacote.source_port = porta_origem;
-    pacote.destination_port = porta_destino;
-    pacote.size = SIZE_PACOTE_UDP;
-    pacote.checksumudp = 0;
-    //MONTANDO DADOS DE ENVIO
-    pacote.jogada_x = jogada_x;
-	pacote.jogada_y = jogada_y;
-
-	/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
-	if ((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0)
-	{
-		printf("Erro na criacao do socket.\n");
-		exit(1);
-	}
-
-	/* Identicacao de qual maquina (MAC) deve receber a mensagem enviada no socket. */
-	destAddr.sll_family = htons(PF_PACKET);
-	destAddr.sll_protocol = htons(ETH_P_ALL);
-	destAddr.sll_halen = 6;
-	destAddr.sll_ifindex = 2; /* indice da interface pela qual os pacotes serao enviados. Eh necess�rio conferir este valor. */
-	memcpy(&(destAddr.sll_addr), pacote.target_ethernet_address, ETHERNET_ADDR_LEN);
-
-	if ((retValue = sendto(sockFd, &pacote, sizeof(pacote), 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0)
-	{
-		printf("ERROR! sendto() \n");
-		exit(1);
-	}
-	else
-	{
-		printf("Send success (%d).\n", retValue);
-	}
-}
-
 /* metodo auxiliar para buscar o endereço mac da maquina */
 int getMac()
 {
@@ -139,102 +43,62 @@ int getMac()
 /* metodo para o cliente */
 void cliente()
 {
-	estrutura_pacote pacote;
-	/* configuracoes para o socket */
-	struct sockaddr_in server;
-	int len = sizeof(server);
-	int sockFd; 
-	int retValue;
-	struct sockaddr_ll destAddr;
-	int slen;
-	/* buffer de entrada da mensagem do servidor */
-	char buffer_in[BUFFER_SIZE];
+	//pacotes que sera para o servidor
+	estrutura_pacote pacote_para_servidor;
 
-	//MONTANDO O PACOTE ETHERNET
-	strcpy(pacote.source_ethernet_address, mac_local);
-	strcpy(pacote.target_ethernet_address, mac_servidor);
-	pacote.ethernet_type = ETH_P_IP;
-	//MONTANDO O PACOTE IPV4
-	pacote.version = 5;
-	pacote.ihl = 4;
-	pacote.tos = 0;
-	pacote.tlen = sizeof(estrutura_pacote);
-	pacote.id = htonl(54321);
-	pacote.flags_offset = 0;
-	pacote.ttl = 255;
-	pacote.protocol = UDP_PROTOCOL;
-	pacote.checksumip = 0;
-	char ip_source[32];
-	strcpy(ip_source, "192.168.1.10");
-	pacote.src = inet_addr(ip_source);
-	char ip_destination[32];
-	strcpy(ip_destination, "192.168.1.10");
-	pacote.dst = inet_addr(ip_destination);
-	srand(time(NULL));
-	pacote.jogada_x = rand() % 3;
-	pacote.jogada_y = rand() % 3;
-	pacote.checksumip = calcula_checksum(pacote);
-	printf("Checksum: %d \n", pacote.checksumip);
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//MONTANDO BASE DO PACOTE DE ENVIO PARA O SERVIDOR servidor    
+	//MONTANDO PACOTE ETHERNET
+	strcpy(pacote_para_servidor.source_ethernet_address, mac_local);
+	strcpy(pacote_para_servidor.target_ethernet_address, mac_servidor);
+	pacote_para_servidor.ethernet_type = ETHERTYPE;
+	//MONTANDO PACOTE IPV4
+	pacote_para_servidor.version = 5;
+	pacote_para_servidor.ihl = 4;
+	pacote_para_servidor.tos = 0;
+	pacote_para_servidor.tlen = sizeof(estrutura_pacote);
+	pacote_para_servidor.id = htonl(54321);
+	pacote_para_servidor.flags_offset = 0;
+	pacote_para_servidor.ttl = 255;
+	pacote_para_servidor.protocol = UDP_PROTOCOL;
+	pacote_para_servidor.checksumip = 0;
+	//***
+	//OS IPS DEVEM SER TRATADOS (PARAMETRO NO MAIN DO CLIENTE) TODO
+	//char ip_source_para_servidor[32];
+	//strcpy(ip_source_para_servidor, "192.168.1.10");
+	//pacote_para_servidor.src = inet_addr(ip_source_para);
+	//char ip_destination_para_servidor[32];
+	//strcpy(ip_destination_para_servidor, "192.168.1.10");
+	//pacote_para_servidor.dst = inet_addr(ip_destination_para_servidor);	
+	//***			
+	//O CHECKSUM SEMPRE DEVE SER DEFINIDO ANTES DE ENVIAR UM PACOTE
+	pacote_para_servidor.checksumip = calcula_checksum(pacote_para_servidor);
+	printf("Checksum: %d \n", pacote_para_servidor.checksumip);
 	//MONTANDO O PACOTE UDP
-    pacote.source_port = porta_origem;
-    pacote.destination_port = porta_destino;
-    pacote.size = SIZE_PACOTE_UDP;
-    pacote.checksumudp = 0;
+	pacote_para_servidor.source_port = porta_origem;
+	pacote_para_servidor.destination_port = porta_destino;
+	pacote_para_servidor.size = SIZE_PACOTE_UDP;
+	pacote_para_servidor.checksumudp = 0;
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
-	if ((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0)
+	//envia pacote para o servidor (solicita conexao no jogo)
+	envia_pacote(pacote_para_servidor);     
+
+	//aguarda conexao no jogo
+	estrutura_pacote pacote = recebe_pacote(porta_destino, porta_origem);
+	printf("FUI CONECTADO AO JOGO E MEU SIMBOLO EH: %c!\n", pacote.mensagem[0]);   
+	verifica_check_sum(pacote);  
+	printf("\n");
+
+	//LACO DO JOGO
+	printf("INICIANDO PARTIDA!!!\n");
+	while(isRunning)
 	{
-		printf("Erro na criacao do socket.\n");
-		exit(1);
+		srand(time(NULL));
+		int resultado = rand() % 5;
+		if(resultado == 2){isRunning = false;}
 	}
-
-	/* Identicacao de qual maquina (MAC) deve receber a mensagem enviada no socket. */
-	destAddr.sll_family = htons(PF_PACKET);
-	destAddr.sll_protocol = htons(ETH_P_ALL);
-	destAddr.sll_halen = 6;
-	destAddr.sll_ifindex = 2; /* indice da interface pela qual os pacotes serao enviados. Eh necess�rio conferir este valor. */
-	memcpy(&(destAddr.sll_addr), pacote.target_ethernet_address, ETHERNET_ADDR_LEN);
-
-	if ((retValue = sendto(sockFd, &pacote, sizeof(pacote), 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0)
-	{
-		printf("ERROR! sendto() \n");
-		exit(1);
-	}
-	else
-	{
-		printf("Send success (%d).\n", retValue);
-	}
-
-    //AGUARDA ENTRAR NO JOGO
-    bool preciso_conectar = true;
-    while(preciso_conectar)
-    {
-        estrutura_pacote pacote_recebido;
-	    recv(sockFd, (char *)&pacote_recebido, sizeof(pacote), 0x0);
-        if (pacote_recebido.ethernet_type == ETHERTYPE && pacote_recebido.protocol == UDP_PROTOCOL && pacote_recebido.destination_port == porta_origem)
-        {
-            
-            printf("FUI CONECTADO AO JOGO E MEU SIMBOLO EH: %c!\n", pacote_recebido.mensagem[0]);   
-            verifica_check_sum(pacote_recebido);  
-            printf("\n");
-            preciso_conectar = false;   
-        }
-    }    
-
-    //LACO DO JOGO
-    printf("INICIANDO PARTIDA!!!\n");
-    while(isRunning)
-    {
-
-
-
-        srand(time(NULL));
-	    int resultado = rand() % 5;
-        if(resultado == 2){isRunning = false;}
-    }
-    printf("O JOGO ACABOU! =]\n");	
-
-	close(sockFd);
+	printf("O JOGO ACABOU! =]\n");	
 }
 
 /* metodo para realizar validação sobre entrada do usuario */
@@ -251,16 +115,15 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-        //iniciarMatriz();
-
 		/* obtendo interface de rede */
 		input_ifname = argv[1];
 		/* obtendo o mac local */
 		getMac();
 		/* obtendo o mac do servidor */
 		strcpy(mac_servidor, argv[2]);
-        /* obtendo a porta origem do cliente */
-        porta_origem = htons(atoi(argv[3]));
+		/* obtendo a porta origem do cliente */
+		porta_origem = atoi(argv[3]);
+		porta_destino = PORTA_SERVIDOR;
 		cliente();
 	}
 }
