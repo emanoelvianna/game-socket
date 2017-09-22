@@ -58,12 +58,11 @@ typedef struct
 
 	/* Dados */
 	bool NAO_DEVO_SER_LIDO_PELO_SERVIDOR;
-	bool ganhei;
-	bool perdi;
 	bool jogada_valida;
+	bool acabou;
 	unsigned char meu_simbolo;
-	unsigned char jogada_x;
-	unsigned char jogada_y;
+	int linha;
+	int coluna;
 	unsigned char tabuleiro[3][3];
 	char mensagem[100];
 } estrutura_pacote;
@@ -108,17 +107,19 @@ unsigned short calcula_checksum(estrutura_pacote pacote_aux)
 	return (unsigned short)in_cksum((unsigned short *)datagrama, SIZE_PACOTE_IP);
 }
 
-void verifica_check_sum(estrutura_pacote pacote_aux)
+bool verifica_check_sum(estrutura_pacote pacote_aux)
 {
 	unsigned short checksum_recalculated = calcula_checksum(pacote_aux);
-	printf("Checksum (recebido=%d) (recalculado=%d) \n", pacote_aux.checksumip, checksum_recalculated);
+	/* printf("Checksum (recebido=%d) (recalculado=%d) \n", pacote_aux.checksumip, checksum_recalculated); */
 	if (pacote_aux.checksumip == checksum_recalculated)
 	{
-		printf("Checksum correto! =]\n");
+		//printf("Checksum correto! =]\n");
+		return true;
 	}
 	else
 	{
-		printf("Checksum incorreto! =[\n");
+		//printf("Checksum incorreto! =[\n");
+		return false;
 	}
 }
 

@@ -18,8 +18,8 @@ unsigned char mac_servidor[ETHERNET_ADDR_LEN];
 unsigned short porta_origem;
 unsigned short porta_destino;
 extern int errno;
-unsigned char jogada_x;
-unsigned char jogada_y;
+int linha;
+int coluna;
 char matriz[N_LINHAS][N_COLUNAS];
 bool isRunning = true;
 
@@ -78,9 +78,9 @@ void jogada()
 	}
 	printf("jogada valida!!!\n");
 	//INT + '0' = CONVERTE INT PARA CHAR
-	jogada_x = jogada_linha + '0';
-	jogada_y = jogada_coluna + '0';
-	printf("jogada escolhida:[%c][%c]\n", jogada_x, jogada_y);
+	linha = jogada_linha;
+	coluna = jogada_coluna;
+	printf("jogada escolhida:[%d][%d]\n", linha, coluna);
 }
 
 void enviar_jogada()
@@ -127,8 +127,8 @@ void enviar_jogada()
 	pacote.size = SIZE_PACOTE_UDP;
 	pacote.checksumudp = 0;
 	//MONTANDO DADOS DE ENVIO
-	pacote.jogada_x = jogada_x;
-	pacote.jogada_y = jogada_y;
+	pacote.linha = linha;
+	pacote.coluna = coluna;
 
 	/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
 	if ((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0)
@@ -207,8 +207,8 @@ void cliente()
 	strcpy(ip_destination, "192.168.1.10");
 	pacote.dst = inet_addr(ip_destination);
 	srand(time(NULL));
-	pacote.jogada_x = rand() % 3;
-	pacote.jogada_y = rand() % 3;
+	pacote.linha = rand() % 3;
+	pacote.coluna = rand() % 3;
 	pacote.checksumip = calcula_checksum(pacote);
 	printf("Checksum: %d \n", pacote.checksumip);
 	//MONTANDO O PACOTE UDP

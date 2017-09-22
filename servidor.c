@@ -20,6 +20,8 @@ unsigned char mac_jogador2[ETHERNET_ADDR_LEN];
 unsigned short porta_jogador1;
 unsigned short porta_jogador2;
 bool isRunning = true;
+int jogadas = 0;
+char mensagem_partida[100];
 
 /* metodo para incializar a matriz vazia */
 void iniciarMatriz()
@@ -78,7 +80,7 @@ int getMac()
 }
 
 /* metodo para envio de mensagem para cliente */
-void enviarMensagem(unsigned char *mac_destino, unsigned char simbolo_aux, unsigned short porta_destino_aux)
+void enviarMensagem(unsigned char *mac_destino, unsigned short porta_destino_aux, char *mensagem)
 {
 	estrutura_pacote pacote;
 	unsigned char buffer[BUFFER_SIZE];
@@ -112,15 +114,13 @@ void enviarMensagem(unsigned char *mac_destino, unsigned char simbolo_aux, unsig
 	strcpy(ip_destination, "192.168.1.10");
 	pacote.dst = inet_addr(ip_destination);
 	pacote.checksumip = calcula_checksum(pacote);
-	printf("Checksum: %d \n", pacote.checksumip);
 	/* motando pacote UDP */
 	pacote.source_port = PORTA_SERVIDOR;
 	pacote.destination_port = porta_destino_aux;
 	pacote.size = SIZE_PACOTE_UDP;
 	pacote.checksumudp = 0;
 	/* montando pacote de dados */
-	strcpy(pacote.mensagem, "voce acabou de entrar no jogo! =]");
-	pacote.meu_simbolo = simbolo_aux;
+	strcpy(pacote.mensagem, mensagem);
 	pacote.NAO_DEVO_SER_LIDO_PELO_SERVIDOR = true;
 
 	/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
@@ -146,7 +146,156 @@ void enviarMensagem(unsigned char *mac_destino, unsigned char simbolo_aux, unsig
 	}
 	else
 	{
-		printf("Send success (%d).\n", retValue);
+		/* printf("Send success (%d).\n", retValue); */
+	}
+}
+
+/* metodo para verificar quando acabar a partida */
+void atualizarPartida()
+{
+	estrutura_pacote pacote;
+	/* verificar linhas */
+	if (matriz[1][1] == 'X' && matriz[1][2] == 'X' && matriz[1][3] == 'X')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada X ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada X ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada X ganho!");
+	}
+	else if (matriz[2][1] == 'X' && matriz[2][2] == 'X' && matriz[2][3] == 'X')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada X ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada X ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada X ganho!");
+	}
+	else if (matriz[3][1] == 'X' && matriz[3][2] == 'X' && matriz[3][3] == 'X')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada X ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada X ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada X ganho!");
+	}
+	else if (matriz[1][1] == 'O' && matriz[1][2] == 'O' && matriz[1][3] == 'O')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada O ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada O ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada O ganho!");
+	}
+	else if (matriz[2][1] == 'O' && matriz[2][2] == 'O' && matriz[2][3] == 'O')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada O ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada O ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada O ganho!");
+	}
+	else if (matriz[3][1] == 'O' && matriz[3][2] == 'O' && matriz[3][3] == 'O')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada O ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada O ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada O ganho!");
+	}
+	/* verificar colunas */
+	else if (matriz[1][1] == 'X' && matriz[2][1] == 'X' && matriz[3][1] == 'X')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada X ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada X ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada X ganho!");
+	}
+	else if (matriz[1][2] == 'X' && matriz[2][2] == 'X' && matriz[3][2] == 'X')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada X ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada X ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada X ganho!");
+	}
+	else if (matriz[1][3] == 'X' && matriz[2][3] == 'X' && matriz[3][3] == 'X')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada X ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada X ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada X ganho!");
+	}
+	else if (matriz[1][1] == 'O' && matriz[2][1] == 'O' && matriz[3][1] == 'O')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada O ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada O ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada O ganho!");
+	}
+	else if (matriz[1][2] == 'O' && matriz[2][2] == 'O' && matriz[3][2] == 'O')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada O ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada O ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada O ganho!");
+	}
+	else if (matriz[1][3] == 'O' && matriz[2][3] == 'O' && matriz[3][3] == 'O')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada O ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada O ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada O ganho!");
+	} /* verificar diagonais */
+	else if (matriz[1][1] == 'X' && matriz[2][2] == 'X' && matriz[3][3] == 'X')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada X ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada X ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada X ganho!");
+	}
+	else if (matriz[1][3] == 'X' && matriz[2][2] == 'X' && matriz[3][1] == 'X')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada X ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada X ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada X ganho!");
+	}
+	else if (matriz[1][1] == 'O' && matriz[2][2] == 'O' && matriz[3][3] == 'O')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada O ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada O ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada O ganho!");
+	}
+	else if (matriz[1][3] == 'O' && matriz[2][2] == 'O' && matriz[3][1] == 'O')
+	{
+		pacote.acabou = true;
+		printf("Servidor: partida finalizada O ganho!\n");
+		/* envia mensagem ao cliente com atualização da partida */
+		enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida finalizada O ganho!");
+		enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida finalizada O ganho!");
+	}
+	else
+	{
+		/* partida chegou ao final empatada */
+		if (jogadas == 9)
+		{
+			isRunning = false;
+			pacote.acabou = true;
+			printf("Servidor: partida empatada!\n");
+			/* envia mensagem ao cliente com atualização da partida */
+			enviarMensagem(mac_jogador1, pacote.source_port, "Servidor: partida empatada!");
+			enviarMensagem(mac_jogador2, pacote.source_port, "Servidor: partida empatada!");
+		}
 	}
 }
 
@@ -198,7 +347,10 @@ int servidor()
 	}
 
 	/* aguarda entrada de jogadores */
-	printf(" Esperando jogadores ... \n");
+	printf("--------------------------------------------\n");
+	printf("----- Jogo da velha utilizando sockets -----\n");
+	printf("--------------------------------------------\n");
+	printf(" \nServidor: Partida esperando jogadores...\n");
 	/* adicionando jogador 1 */
 	bool preciso_conectar_jogador = true;
 	while (preciso_conectar_jogador)
@@ -212,16 +364,14 @@ int servidor()
 			jogador1 = true;
 			memcpy(mac_jogador1, pacote.source_ethernet_address, ETHERNET_ADDR_LEN);
 			porta_jogador1 = pacote.source_port;
-			enviarMensagem(mac_jogador1, 'X', pacote.source_port);
-			printf("Servidor: Jogador1 entrou na partida!\n");
-			printf("MAC do pacote (original): %s\n", pacote.source_ethernet_address);
-			printf("MAC do pacote (copiado): %s\n", mac_jogador1);
+			enviarMensagem(mac_jogador1, pacote.source_port, "X");
+			printf("Servidor: Jogador1 entrou na partida!");
 			verifica_check_sum(pacote);
 			printf("\n");
 			preciso_conectar_jogador = false;
 		}
 	}
-	//CONECTANDO JOGADOR2!!!
+	/* adicionando jogador 2 */
 	preciso_conectar_jogador = true;
 	while (preciso_conectar_jogador)
 	{
@@ -236,10 +386,8 @@ int servidor()
 				jogador2 = true;
 				memcpy(mac_jogador2, pacote.source_ethernet_address, ETHERNET_ADDR_LEN);
 				porta_jogador2 = pacote.source_port;
-				enviarMensagem(mac_jogador2, 'O', pacote.source_port);
-				printf("Servidor: Jogador2 entrou na partida!\n");
-				printf("MAC do pacote (original): %s\n", pacote.source_ethernet_address);
-				printf("MAC do pacote (copiado): %s\n", mac_jogador2);
+				enviarMensagem(mac_jogador2, pacote.source_port, "O");
+				printf("Servidor: Jogador2 entrou na partida!");
 				verifica_check_sum(pacote);
 				printf("\n");
 				preciso_conectar_jogador = false;
@@ -247,19 +395,48 @@ int servidor()
 		}
 	}
 
+	/* inicia a matriz para começar a partida */
+	iniciarMatriz();
 	/* laço do jogo */
-	printf("INICIANDO PARTIDA!!!\n");
+	printf("\nServidor: Iniciando a partida\n\n");
+
+	int jogadorQueDeveJogar = 1;
 	while (isRunning)
 	{
-
-		srand(time(NULL));
-		int resultado = rand() % 5;
-		if (resultado == 2)
+		/* verificar jogadas */
+		estrutura_pacote pacote;
+		/* se ocorreu alguma jogada atualiza matriz e escreve em tela */
+		recv(fd, (char *)&pacote, sizeof(pacote), 0x0);
+		if (pacote.ethernet_type == ETHERTYPE && pacote.protocol == UDP_PROTOCOL && pacote.source_port != PORTA_SERVIDOR)
 		{
-			isRunning = false;
-		}
+			/* verificar qual jogador deve realizar a jogada */
+			if (jogadorQueDeveJogar == 1)
+			{
+				if (pacote.source_ethernet_address == mac_jogador1)
+				{
+					adicionarJogada(pacote.linha, pacote.coluna, 'X');
+					atualizarPartida();
+					desenhaMatriz();
+					/* controla a quantidade de jogadas */
+					jogadas = jogadas + 1;
+					jogadorQueDeveJogar = 2;
+				}
+			}
+			else if (jogadorQueDeveJogar == 2)
+			{
+				if (pacote.source_ethernet_address == mac_jogador2, 'O')
+				{
+					adicionarJogada(pacote.linha, pacote.coluna, 'O');
+					atualizarPartida();
+					desenhaMatriz();
+					/* controla a quantidade de jogadas */
+					jogadas = jogadas + 1;
+					jogadorQueDeveJogar = 1;
+				}
+			}
+		};
 	}
-	printf("O JOGO ACABOU! =]\n");
+	printf("Servidor: O jogo acabou! =]\n");
 
 	close(fd);
 }
