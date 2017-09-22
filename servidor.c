@@ -8,12 +8,18 @@
 #include <arpa/inet.h>
 #include <linux/if_packet.h>
 #include <stdbool.h>
+#include <time.h>
 /* utilizando os utilitarios */
 #include "estrutura.h"
 
 char matriz[N_LINHAS][N_COLUNAS];
 char *input_ifname;
 unsigned char mac_server[ETHERNET_ADDR_LEN];
+unsigned char mac_jogador1[ETHERNET_ADDR_LEN];
+unsigned char mac_jogador2[ETHERNET_ADDR_LEN];
+unsigned short porta_jogador1;
+unsigned short porta_jogador2;
+bool isRunning = true;
 
 /* metodo para incializar a matriz vazia */
 void iniciarMatriz()
@@ -29,7 +35,6 @@ void iniciarMatriz()
 }
 
 /* metodo para desenhar a matriz */
-
 void desenhaMatriz()
 {
 	printf("   1   2   3   \n");
@@ -73,17 +78,55 @@ int getMac()
 }
 
 /* metodo para envio de mensagem para cliente */
-void enviarMensagem(unsigned char *mac_destino)
+void enviarMensagem(unsigned char *mac_destino, unsigned char simbolo_aux, unsigned short porta_destino_aux)
 {
-	int sockFd = 0, retValue = 0;
-	char buffer[BUFFER_SIZE], dummyBuf[50];
-	struct sockaddr_ll destAddr;
-	short int etherTypeT = htons(0x8200);
+	estrutura_pacote pacote;
+	unsigned char buffer[BUFFER_SIZE];
 
-	/* htons: converte um short (2-byte) integer para standard network byte order. */
+	/* configuracoes para o socket */
+	int sockFd = 0, retValue = 0;
+	struct sockaddr_ll destAddr;
+	char dummyBuf[50];
+	short int etherTypeT = htons(0x800);
+
+	/* montando o pacote Ethernet - inicio */
+	memcpy(pacote.target_ethernet_address, mac_destino, ETHERNET_ADDR_LEN);
+	memcpy(pacote.source_ethernet_address, mac_server, ETHERNET_ADDR_LEN);
+	pacote.ethernet_type = ETH_P_IP;
+	/* montando o pacote Ethernet - fim */
+
+	/* montando o pacote IPv4 - inicio */
+	pacote.version = 5;
+	pacote.ihl = 4;
+	pacote.tos = 0;
+	pacote.tlen = sizeof(estrutura_pacote);
+	pacote.id = htonl(54321);
+	pacote.flags_offset = 0;
+	pacote.ttl = 255;
+	pacote.protocol = UDP_PROTOCOL;
+	pacote.checksumip = 0;
+	char ip_source[32];
+	strcpy(ip_source, "192.168.1.10");
+	pacote.src = inet_addr(ip_source);
+	char ip_destination[32];
+	strcpy(ip_destination, "192.168.1.10");
+	pacote.dst = inet_addr(ip_destination);
+	pacote.checksumip = calcula_checksum(pacote);
+	printf("Checksum: %d \n", pacote.checksumip);
+	/* motando pacote UDP */
+	pacote.source_port = PORTA_SERVIDOR;
+	pacote.destination_port = porta_destino_aux;
+	pacote.size = SIZE_PACOTE_UDP;
+	pacote.checksumudp = 0;
+	/* montando pacote de dados */
+	strcpy(pacote.mensagem, "voce acabou de entrar no jogo! =]");
+	pacote.meu_simbolo = simbolo_aux;
+	pacote.NAO_DEVO_SER_LIDO_PELO_SERVIDOR = true;
+
+	/* Criacao do socket. Todos os pacotes devem ser construidos a partir do protocolo Ethernet. */
 	if ((sockFd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) < 0)
 	{
-		printf("Erro na criacao do socket para enviar mensagem.\n");
+		printf("Erro na criacao do socket.\n");
 		exit(1);
 	}
 
@@ -92,23 +135,19 @@ void enviarMensagem(unsigned char *mac_destino)
 	destAddr.sll_protocol = htons(ETH_P_ALL);
 	destAddr.sll_halen = 6;
 	destAddr.sll_ifindex = 2; /* indice da interface pela qual os pacotes serao enviados. Eh necess�rio conferir este valor. */
-	memcpy(&(destAddr.sll_addr), mac_destino, ETHERNET_ADDR_LEN);
-
-	/* Cabecalho Ethernet */
-	memcpy(buffer, mac_destino, ETHERNET_ADDR_LEN);
-	memcpy((buffer + ETHERNET_ADDR_LEN), mac_server, ETHERNET_ADDR_LEN);
-	memcpy((buffer + (2 * ETHERNET_ADDR_LEN)), &(etherTypeT), sizeof(etherTypeT));
+	memcpy(&(destAddr.sll_addr), pacote.target_ethernet_address, ETHERNET_ADDR_LEN);
 
 	/* Add some data */
-	memcpy((buffer + ETHERTYPE_LEN + (2 * ETHERNET_ADDR_LEN)), dummyBuf, 50);
-
-	/* Envia pacotes de 64 bytes */
-	if ((retValue = sendto(sockFd, buffer, 64, 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0)
+	//memcpy((buffer + ETHERTYPE_LEN + (2 * ETHERNET_ADDR_LEN)), dummyBuf, 50);
+	if ((retValue = sendto(sockFd, &pacote, sizeof(pacote), 0, (struct sockaddr *)&(destAddr), sizeof(struct sockaddr_ll))) < 0)
 	{
 		printf("ERROR! sendto() \n");
 		exit(1);
 	}
-	printf("Send success (%d).\n", retValue);
+	else
+	{
+		printf("Send success (%d).\n", retValue);
+	}
 }
 
 /* metodo para o servidor */
@@ -123,6 +162,7 @@ int servidor()
 	/* definição dos jogadores  */
 	bool jogador1 = false;
 	bool jogador2 = false;
+	bool jogador3 = false;
 
 	strcpy(ifname, input_ifname);
 
@@ -157,48 +197,69 @@ int servidor()
 		exit(1);
 	}
 
-	if (jogador1 == false && jogador2 == false)
-	{
-		printf(" Esperando jogadores ... \n");
-	}
-
-	while (1)
+	/* aguarda entrada de jogadores */
+	printf(" Esperando jogadores ... \n");
+	/* adicionando jogador 1 */
+	bool preciso_conectar_jogador = true;
+	while (preciso_conectar_jogador)
 	{
 		estrutura_pacote pacote;
-
-		/* Recebe pacotes */
 		recv(fd, (char *)&pacote, sizeof(pacote), 0x0);
-
-		/* verifica se é um pacote IPv4 */
-		if (pacote.ethernet_type == ETHERTYPE && pacote.protocol == UDP_PROTOCOL)
+		//O SERVIDOR NAO PROCESSA INFORMACAO CASO ELE TENHA MANDADO (PACOTE.SOURCE = PORTA_SERVIDOR)
+		if (pacote.ethernet_type == ETHERTYPE && pacote.protocol == UDP_PROTOCOL && pacote.source_port != PORTA_SERVIDOR)
 		{
-			/* verifica se o mac destino é o server */
-			if (strcmp(pacote.target_ethernet_address, mac_server) != 0)
+
+			jogador1 = true;
+			memcpy(mac_jogador1, pacote.source_ethernet_address, ETHERNET_ADDR_LEN);
+			porta_jogador1 = pacote.source_port;
+			enviarMensagem(mac_jogador1, 'X', pacote.source_port);
+			printf("Servidor: Jogador1 entrou na partida!\n");
+			printf("MAC do pacote (original): %s\n", pacote.source_ethernet_address);
+			printf("MAC do pacote (copiado): %s\n", mac_jogador1);
+			verifica_check_sum(pacote);
+			printf("\n");
+			preciso_conectar_jogador = false;
+		}
+	}
+	//CONECTANDO JOGADOR2!!!
+	preciso_conectar_jogador = true;
+	while (preciso_conectar_jogador)
+	{
+		estrutura_pacote pacote;
+		recv(fd, (char *)&pacote, sizeof(pacote), 0x0);
+		//O SERVIDOR NAO PROCESSA INFORMACAO CASO ELE TENHA MANDADO (PACOTE.SOURCE = PORTA_SERVIDOR)
+		if (pacote.ethernet_type == ETHERTYPE && pacote.protocol == UDP_PROTOCOL && pacote.source_port != PORTA_SERVIDOR)
+		{
+			//verifica se o mac origem capturado e diferente do mac do jogador1
+			if (pacote.source_port != porta_jogador1)
 			{
-				/* adicionando jogadores a partida */
-				if (jogador1 == false)
-				{
-					jogador1 = true;
-					printf("Servidor: Jogador 1 entrou na partida!\n");
-					printf("MAC do jogador 1: %s\n", pacote.source_ethernet_address);
-					/* enviando mensagem ao jogador*/
-					//enviarMensagem(pacote.source_ethernet_address);
-				}
-				else if (jogador2 == false)
-				{
-					jogador2 = true;
-					printf("Servidor: Jogador 2 entrou na partida!\n");
-					printf("MAC do jogador 2: %s\n", pacote.source_ethernet_address);
-					/* enviando mensagem ao jogador*/
-					//enviarMensagem(pacote.source_ethernet_address);
-				}
-				else
-				{
-					printf("Servidor: Quantidade de jogadores já ultrapassada!\n");
-				}
+				jogador2 = true;
+				memcpy(mac_jogador2, pacote.source_ethernet_address, ETHERNET_ADDR_LEN);
+				porta_jogador2 = pacote.source_port;
+				enviarMensagem(mac_jogador2, 'O', pacote.source_port);
+				printf("Servidor: Jogador2 entrou na partida!\n");
+				printf("MAC do pacote (original): %s\n", pacote.source_ethernet_address);
+				printf("MAC do pacote (copiado): %s\n", mac_jogador2);
+				verifica_check_sum(pacote);
+				printf("\n");
+				preciso_conectar_jogador = false;
 			}
 		}
 	}
+
+	/* laço do jogo */
+	printf("INICIANDO PARTIDA!!!\n");
+	while (isRunning)
+	{
+
+		srand(time(NULL));
+		int resultado = rand() % 5;
+		if (resultado == 2)
+		{
+			isRunning = false;
+		}
+	}
+	printf("O JOGO ACABOU! =]\n");
 
 	close(fd);
 }
