@@ -18,10 +18,23 @@ unsigned char mac_servidor[ETHERNET_ADDR_LEN];
 unsigned short porta_origem;
 unsigned short porta_destino;
 extern int errno;
-unsigned char jogada_x;
-unsigned char jogada_y;
+unsigned char jogada_linha;
+unsigned char jogada_coluna;
 char matriz[N_LINHAS][N_COLUNAS];
-bool isRunning = true;
+unsigned char meu_simbolo;
+
+void definir_jogada()
+{
+    int linha_aux;
+    int coluna_aux;
+
+    printf("digite a jogada -> linha coluna:");
+    scanf("%d %d", &linha_aux, &coluna_aux);
+    printf("\n");
+
+    jogada_linha = linha_aux + '0';
+    jogada_coluna = coluna_aux + '0';
+}
 
 /* metodo auxiliar para buscar o endereço mac da maquina */
 int getMac()
@@ -86,17 +99,40 @@ void cliente()
 
 	//aguarda conexao no jogo
 	estrutura_pacote pacote = recebe_pacote(porta_destino, porta_origem);
-	printf("FUI CONECTADO AO JOGO E MEU SIMBOLO EH: %c!\n", pacote.mensagem[0]);   
+    meu_simbolo = pacote.mensagem[0];
+	printf("FUI CONECTADO AO JOGO E MEU SIMBOLO EH: %c (confirmando: %c)!\n", pacote.mensagem[0], meu_simbolo);   
 	verifica_check_sum(pacote);  
 	printf("\n");
 
 	//LACO DO JOGO
 	printf("INICIANDO PARTIDA!!!\n");
-	while(isRunning)
+    bool preciso_fazer_jogada = true;
+	while(preciso_fazer_jogada == true)
 	{
-		srand(time(NULL));
-		int resultado = rand() % 5;
-		if(resultado == 2){isRunning = false;}
+        //espera receber pacote do servidor
+        estrutura_pacote pacote_recebido = recebe_pacote(porta_destino, porta_origem);
+
+        //imprime mensagem recebida do servidor
+        printf("%s\n",pacote_recebido.mensagem);
+
+        //verifica se o jogo acabou
+        if(pacote_recebido.o_jogo_acabou == true)
+        {            
+            preciso_fazer_jogada = false;
+        }
+        //manda a jogada para o servidor
+        else
+        {
+            //digita a jogada no terminal
+            definir_jogada();
+
+            //atualiza pacote de envio com a jogada definida
+            pacote_para_servidor.jogada_linha = jogada_linha;
+            pacote_para_servidor.jogada_coluna = jogada_coluna;
+
+            //envia pacote com a jogada para o servidor
+	        envia_pacote(pacote_para_servidor); 
+        }
 	}
 	printf("O JOGO ACABOU! =]\n");	
 }
