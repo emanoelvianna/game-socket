@@ -34,41 +34,41 @@ unsigned short jogador2_porta_origem;
 
 typedef struct
 {
-    /* Cabeçalho Ethernet */
-    unsigned char target_ethernet_address[ETHERNET_ADDR_LEN]; // endereco_fisico_destino
-    unsigned char source_ethernet_address[ETHERNET_ADDR_LEN]; // endereco_fisico_origem
-    unsigned short ethernet_type;                             // tipo_protocolo_ethernet
+	/* Cabeçalho Ethernet */
+	unsigned char target_ethernet_address[ETHERNET_ADDR_LEN]; // endereco_fisico_destino
+	unsigned char source_ethernet_address[ETHERNET_ADDR_LEN]; // endereco_fisico_origem
+	unsigned short ethernet_type;                             // tipo_protocolo_ethernet
 
-    /* Pacote IPv4 */
+	/* Pacote IPv4 */
 	unsigned char version:4;     // versao (nibble)
 	unsigned char ihl:4;         // tamanho_cabecalho (nibble)
-    unsigned char tos;           // tipo_servico
-    unsigned short tlen;         // comprimento_pacote
-    unsigned short id;           // identificacao
-    unsigned short flags;        // flags
-    unsigned short flags_offset; // deslocamento
-    unsigned char ttl;           // tempo_de_vida
-    unsigned char protocol;      // identificacao_protocolo
-    unsigned short checksumip;   // check sum
-    unsigned int src;          // endereco_fisico_origem
-    unsigned int dst;          // endereco_fisico_destino
+	unsigned char tos;           // tipo_servico
+	unsigned short tlen;         // comprimento_pacote
+	unsigned short id;           // identificacao
+	unsigned short flags;        // flags
+	unsigned short flags_offset; // deslocamento
+	unsigned char ttl;           // tempo_de_vida
+	unsigned char protocol;      // identificacao_protocolo
+	unsigned short checksumip;   // check sum
+	unsigned int src;          // endereco_fisico_origem
+	unsigned int dst;          // endereco_fisico_destino
 
-    /* Pacote UDP */
-    unsigned short source_port;      // porta_origem
-    unsigned short destination_port; // porta_destino
-    unsigned short size;             // tamanho_pacote
-    unsigned short checksumudp;
+	/* Pacote UDP */
+	unsigned short source_port;      // porta_origem
+	unsigned short destination_port; // porta_destino
+	unsigned short size;             // tamanho_pacote
+	unsigned short checksumudp;
 
-    /* Dados */
-    bool NAO_DEVO_SER_LIDO_PELO_SERVIDOR;
+	/* Dados */
+	bool NAO_DEVO_SER_LIDO_PELO_SERVIDOR;
 	bool ganhei;
 	bool perdi;
 	bool jogada_valida;
-    unsigned char meu_simbolo;
+	unsigned char meu_simbolo;
 	unsigned char jogada_x;
 	unsigned char jogada_y;
 	unsigned char tabuleiro[3][3];  
-    char mensagem[100];  
+	char mensagem[100];  
 } estrutura_pacote;
 
 unsigned short in_cksum(unsigned short *addr,int len)
@@ -103,7 +103,7 @@ unsigned short in_cksum(unsigned short *addr,int len)
 
 unsigned short calcula_checksum(estrutura_pacote pacote_aux)
 {
-    char datagrama[BUFFER_SIZE];
+	char datagrama[BUFFER_SIZE];
 	memset (datagrama, 0, BUFFER_SIZE);
 	memcpy(datagrama, &pacote_aux, sizeof(BUFFER_SIZE));
 	return (unsigned short) in_cksum( (unsigned short*) datagrama, SIZE_PACOTE_IP);
@@ -111,16 +111,16 @@ unsigned short calcula_checksum(estrutura_pacote pacote_aux)
 
 void verifica_check_sum(estrutura_pacote pacote_aux)
 {
-            unsigned short checksum_recalculated = calcula_checksum(pacote_aux);
-			printf("Checksum (recebido=%d) (recalculado=%d) \n", pacote_aux.checksumip,checksum_recalculated);
-			if(pacote_aux.checksumip == checksum_recalculated)
-			{
-				printf("Checksum correto! =]\n");
-			}
-			else
-			{
-				printf("Checksum incorreto! =[\n");
-            }
+	unsigned short checksum_recalculated = calcula_checksum(pacote_aux);
+	printf("Checksum (recebido=%d) (recalculado=%d) \n", pacote_aux.checksumip,checksum_recalculated);
+	if(pacote_aux.checksumip == checksum_recalculated)
+	{
+		printf("Checksum correto! =]\n");
+	}
+	else
+	{
+		printf("Checksum incorreto! =[\n");
+	}
 }
 
 bool envia_pacote_aux(estrutura_pacote pacote)
@@ -155,21 +155,21 @@ bool envia_pacote_aux(estrutura_pacote pacote)
 	else
 	{
 		//O PACOTE FOI ENVIADO
-        return true;
+		return true;
 	}
 }
 
 /* tenta enviar pacote ate conseguir */
 bool envia_pacote(estrutura_pacote pacote)
 {
-    bool pacote_foi_enviado = envia_pacote_aux(pacote);
+	bool pacote_foi_enviado = envia_pacote_aux(pacote);
 
-    while(pacote_foi_enviado == false)
-    {
-        pacote_foi_enviado = envia_pacote_aux(pacote); 
-    }
+	while(pacote_foi_enviado == false)
+	{
+		pacote_foi_enviado = envia_pacote_aux(pacote); 
+	}
 
-    return true;
+	return true;
 }
 
 /* 
@@ -179,7 +179,7 @@ bool envia_pacote(estrutura_pacote pacote)
  */
 estrutura_pacote recebe_pacote(unsigned short porta_origem, unsigned short porta_destino)
 {
-    int fd;
+	int fd;
 	unsigned char buffer[BUFFER_SIZE];
 	struct ifreq ifr;
 	char ifname[IFNAMSIZ];
@@ -217,35 +217,36 @@ estrutura_pacote recebe_pacote(unsigned short porta_origem, unsigned short porta
 		exit(1);
 	}
 
-    //se eu quero receber um pacote para mim, nao importando a origem (conectar jogador)
-    if(porta_origem == 0)
-    {
-        estrutura_pacote pacote;
-        while(true)
-        {        
-	        recv(fd, (char *)&pacote, sizeof(pacote), 0x0);
-            if (pacote.ethernet_type == ETHERTYPE && pacote.protocol == UDP_PROTOCOL && pacote.source_port != porta_destino)
-	        {     
-                return pacote;           	      
-            }
-        }
-        return pacote;
+	//se eu quero receber um pacote para mim, nao importando a origem (conectar jogador)
+	if(porta_origem == 0)
+	{
+		estrutura_pacote pacote;
+		while(true)
+		{        
+			recv(fd, (char *)&pacote, sizeof(pacote), 0x0);
+			if (pacote.ethernet_type == ETHERTYPE && pacote.protocol == UDP_PROTOCOL && pacote.source_port != pacote.destination_port && pacote.destination_port == porta_destino)
+			{     
+				return pacote;           	      
+			}
+		}
+		return pacote;
 
-    }
-    //se eu quero receber um pacote para mim, sendo a origem especifica (jogador ja conectado)
-    else
-    {
-        estrutura_pacote pacote;
-        while(true)
-        {        
-	        recv(fd, (char *)&pacote, sizeof(pacote), 0x0);
-            if (pacote.ethernet_type == ETHERTYPE && pacote.protocol == UDP_PROTOCOL && pacote.destination_port == porta_origem && pacote.source_port != porta_destino)
-	        {     
-                return pacote;           	      
-            }
-        }
-        return pacote;
-    }    
+	}
+	//se eu quero receber um pacote para mim, sendo a origem especifica (jogador ja conectado)
+	else
+	{
+		estrutura_pacote pacote;
+		while(true)
+		{        
+			recv(fd, (char *)&pacote, sizeof(pacote), 0x0);
+
+			if (pacote.ethernet_type == ETHERTYPE && pacote.protocol == UDP_PROTOCOL && pacote.destination_port == porta_destino && pacote.source_port == porta_origem && pacote.source_port != pacote.destination_port)	        
+			{     
+				return pacote;           	      
+			}
+		}
+		return pacote;
+	}    
 }
 
 #endif
