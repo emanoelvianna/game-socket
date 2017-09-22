@@ -9,6 +9,7 @@
 #include <linux/if_packet.h>
 #include <stdbool.h>
 #include <time.h>
+#include <unistd.h>
 /* utilizando os utilitarios */
 #include "estrutura.h"
 
@@ -161,7 +162,7 @@ int servidor()
 		//MONTANDO PACOTE UDP
 		pacote_para_jogador1.source_port = PORTA_SERVIDOR;
 		porta_jogador1 = pacote.source_port;
-		pacote_para_jogador1.destination_port = porta_jogador1;
+		pacote_para_jogador1.destination_port = pacote.source_port;
 		pacote_para_jogador1.size = SIZE_PACOTE_UDP;
 		pacote_para_jogador1.checksumudp = 0;
 		//MONTANDO OS DADOS (PAYLOAD) DO PACOTE   
@@ -241,9 +242,6 @@ int servidor()
 	printf("INICIANDO PARTIDA!!!\n");
 	while(isRunning)
 	{
-
-
-
 		srand(time(NULL));
 		int resultado = rand() % 5;
 		if(resultado == 2){isRunning = false;}
