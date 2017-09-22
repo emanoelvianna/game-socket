@@ -110,7 +110,7 @@ unsigned short calcula_checksum(estrutura_pacote pacote_aux)
 void verifica_check_sum(estrutura_pacote pacote_aux)
 {
 	unsigned short checksum_recalculated = calcula_checksum(pacote_aux);
-	printf("{ Checksum (recebido=%d) (recalculado=%d) -> ", pacote_aux.checksumip,checksum_recalculated);
+	//printf("{ Checksum (recebido=%d) (recalculado=%d) -> ", pacote_aux.checksumip,checksum_recalculated);
 	if(pacote_aux.checksumip == checksum_recalculated)
 	{
 		printf("Checksum correto! }\n");
@@ -169,87 +169,5 @@ bool envia_pacote(estrutura_pacote pacote)
 
 	return true;
 }
-
-/* FUNCAO GENERICA QUE RECEBE PACOTE!!!!!!!!!!!!!! */
-/* const char* INTERFACE_DE_REDE = "enp0s31f6"; */
-/* 
- * retorna um pacote de acordo com os parametros
- *
- * porta_origem = porta origem desejada do pacote [o argumento porta_origem deve ser 0 se não importa qual e a origem do pacote]
- */
-//A FUNCAO FOI COMENTADA E DUPLICADA, POSSUI UMA COPIA NO CLIENTE E UMA COPIA NO SERVIDOR
-/*
-   estrutura_pacote recebe_pacote(unsigned short porta_origem, unsigned short porta_destino)
-   {
-   int fd;
-   unsigned char buffer[BUFFER_SIZE];
-   struct ifreq ifr;
-   char ifname[IFNAMSIZ];
-
-   strcpy(ifname, INTERFACE_DE_REDE);
-
-//Cria um descritor de socket do tipo RAW
-fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
-if (fd < 0)
-{
-fprintf(stderr, "Erro ao tentar criar o socket!");
-exit(1);
-}
-
-//Obtem o indice da interface de rede
-strcpy(ifr.ifr_name, ifname);
-if (ioctl(fd, SIOCGIFINDEX, &ifr) < 0)
-{
-perror("ioctl");
-exit(1);
-}
-
-//Obtem as flags da interface
-if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0)
-{
-perror("ioctl");
-exit(1);
-}
-
-//Coloca a interface em modo promiscuo
-ifr.ifr_flags |= IFF_PROMISC;
-if (ioctl(fd, SIOCSIFFLAGS, &ifr) < 0)
-{
-perror("ioctl");
-exit(1);
-}
-
-//se eu quero receber um pacote para mim, nao importando a origem (conectar jogador)
-if(porta_origem == 0)
-{
-estrutura_pacote pacote;
-while(true)
-{        
-recv(fd, (char *)&pacote, sizeof(pacote), 0x0);
-if (pacote.ethernet_type == ETHERTYPE && pacote.protocol == UDP_PROTOCOL && pacote.source_port != pacote.destination_port && pacote.destination_port == porta_destino)
-{     
-return pacote;           	      
-}
-}
-return pacote;
-
-}
-//se eu quero receber um pacote para mim, sendo a origem especifica (jogador ja conectado)
-else
-{
-estrutura_pacote pacote;
-while(true)
-{        
-recv(fd, (char *)&pacote, sizeof(pacote), 0x0);
-
-if (pacote.ethernet_type == ETHERTYPE && pacote.protocol == UDP_PROTOCOL && pacote.destination_port == porta_destino && pacote.source_port == porta_origem && pacote.source_port != pacote.destination_port)	        
-{     
-return pacote;           	      
-}
-}
-return pacote;
-}    
-}
-*/
 
 #endif

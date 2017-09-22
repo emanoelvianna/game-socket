@@ -32,7 +32,7 @@ void definir_jogada()
 	int linha_aux;
 	int coluna_aux;
 
-	printf("digite a jogada -> linha coluna:");
+	printf("faça sua jogada linha coluna:\n");
 	scanf("%d %d", &linha_aux, &coluna_aux);
 	//printf("\n");
 
@@ -106,12 +106,12 @@ void cliente()
 	estrutura_pacote pacote = recebe_pacote(porta_destino, porta_origem);
 	verifica_check_sum(pacote); 
 	meu_simbolo = pacote.mensagem[0];
-	printf("FUI CONECTADO AO JOGO E MEU SIMBOLO EH: %c!\n", pacote.mensagem[0]);   
+	printf("Estou na partida, meu simbolo é: %c!\n", pacote.mensagem[0]);   
 
 	//printf("\n");
 
 	//LACO DO JOGO
-	printf("INICIANDO PARTIDA!!!\n");
+	printf("\nIniciando a partida\n\n");
 	bool preciso_fazer_jogada = true;
 	while(preciso_fazer_jogada == true)
 	{
