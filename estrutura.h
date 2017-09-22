@@ -60,13 +60,9 @@ typedef struct
 	unsigned short checksumudp;
 
 	/* Dados */
-	bool NAO_DEVO_SER_LIDO_PELO_SERVIDOR;
-	bool ganhei;
-	bool perdi;
-	bool jogada_valida;
-	unsigned char meu_simbolo;
-	unsigned char jogada_x;
-	unsigned char jogada_y;
+	bool o_jogo_acabou;
+	unsigned char jogada_linha;
+	unsigned char jogada_coluna;
 	unsigned char tabuleiro[3][3];  
 	char mensagem[100];  
 } estrutura_pacote;
