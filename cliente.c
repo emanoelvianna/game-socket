@@ -23,71 +23,8 @@ int coluna;
 char matriz[N_LINHAS][N_COLUNAS];
 bool isRunning = true;
 
-void iniciarMatriz()
-{
-	int i, j;
-	for (i = 0; i < N_LINHAS; i++)
-	{
-		for (j = 0; j < N_COLUNAS; j++)
-		{
-			matriz[i][j] = '.';
-		}
-	}
-}
-
-bool jogada_valida(unsigned char linha, unsigned char coluna)
-{
-	if (linha >= 0 && linha < N_LINHAS)
-	{
-		if (coluna >= 0 && coluna < N_COLUNAS)
-		{
-			if (matriz[linha][coluna] == '.')
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
-}
-
-void jogada()
-{
-	int jogada_linha;
-	int jogada_coluna;
-
-	printf("jogar:[linha][coluna] ");
-	scanf("%d %d", &jogada_linha, &jogada_coluna);
-
-	while (!(jogada_valida(jogada_linha, jogada_coluna)))
-	{
-		printf("jogada invalida! digite outra coordenada\n");
-		printf("jogar:[linha][coluna] ");
-		scanf("%d %d", &jogada_linha, &jogada_coluna);
-		printf("jogada escolhida:[%d][%d]\n", jogada_linha, jogada_coluna);
-	}
-	printf("jogada valida!!!\n");
-	//INT + '0' = CONVERTE INT PARA CHAR
-	linha = jogada_linha;
-	coluna = jogada_coluna;
-	printf("jogada escolhida:[%d][%d]\n", linha, coluna);
-}
-
 void enviar_jogada()
 {
-	//define jogada
-	jogada();
-
 	estrutura_pacote pacote;
 	/* configuracoes para o socket */
 	struct sockaddr_in server;
@@ -249,7 +186,8 @@ void cliente()
 		recv(sockFd, (char *)&pacote_recebido, sizeof(pacote), 0x0);
 		if (pacote_recebido.ethernet_type == ETHERTYPE && pacote_recebido.protocol == UDP_PROTOCOL && pacote_recebido.destination_port == porta_origem)
 		{
-			printf("FUI CONECTADO AO JOGO E MEU SIMBOLO EH: %c!\n", pacote_recebido.meu_simbolo);
+
+			printf("FUI CONECTADO AO JOGO E MEU SIMBOLO EH: %c!\n", pacote_recebido.mensagem[0]);
 			verifica_check_sum(pacote_recebido);
 			printf("\n");
 			preciso_conectar = false;
@@ -287,7 +225,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		iniciarMatriz();
+		//iniciarMatriz();
 
 		/* obtendo interface de rede */
 		input_ifname = argv[1];
