@@ -1,7 +1,6 @@
 #ifndef HEADER_MASTER
 #define HEADER_MASTER
 /* declaracao das constantes */
-
 #define PORTA_SERVIDOR 4242 /* definindo a porta de conexão  */
 #define BUFFER_SIZE 1500 /* definicao do tamanho do buffer */
 
@@ -16,6 +15,8 @@
 #define ETHERTYPE 0x0800 /* indicando que é do tipo IPv4 */	 
 #define UDP_PACKAGE_SIZE 50 /* definicao do tamanho do dado UDP */
 
+const char* INTERFACE_DE_REDE = "enp0s31f6";
+
 /* tamanho dos dados do pacote ethernet + ip */
 const int SIZE_PACOTE_IP = (5 * sizeof(unsigned char)) + (4 * sizeof(unsigned short)) + (2 * sizeof(unsigned int)) + (2 * ETHERNET_ADDR_LEN * sizeof(unsigned char)) + (1 * sizeof(unsigned short));
 
@@ -25,9 +26,11 @@ const int SIZE_PACOTE_UDP = 0;
 /* declaracao das estruturas para os jogadores */
 unsigned char jogador1_hardware_address[ETHERNET_ADDR_LEN]; // endereco_fisico_jogador1
 unsigned char jogador1_protocol_address[IP_ADDR_LEN];       // endereco_logico_jogador1
+unsigned short jogador1_porta_origem;
 
 unsigned char jogador2_hardware_address[ETHERNET_ADDR_LEN]; // endereco_fisico_jogador2
 unsigned char jogador2_protocol_address[IP_ADDR_LEN];       // endereco_logico_jogador2
+unsigned short jogador2_porta_origem;
 
 typedef struct
 {
@@ -167,6 +170,82 @@ bool envia_pacote(estrutura_pacote pacote)
     }
 
     return true;
+}
+
+/* 
+ * retorna um pacote de acordo com os parametros
+ *
+ * porta_origem = porta origem desejada do pacote [o argumento porta_origem deve ser 0 se não importa qual e a origem do pacote]
+ */
+estrutura_pacote recebe_pacote(unsigned short porta_origem, unsigned short porta_destino)
+{
+    int fd;
+	unsigned char buffer[BUFFER_SIZE];
+	struct ifreq ifr;
+	char ifname[IFNAMSIZ];
+
+	strcpy(ifname, INTERFACE_DE_REDE);
+
+	//Cria um descritor de socket do tipo RAW
+	fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+	if (fd < 0)
+	{
+		fprintf(stderr, "Erro ao tentar criar o socket!");
+		exit(1);
+	}
+
+	//Obtem o indice da interface de rede
+	strcpy(ifr.ifr_name, ifname);
+	if (ioctl(fd, SIOCGIFINDEX, &ifr) < 0)
+	{
+		perror("ioctl");
+		exit(1);
+	}
+
+	//Obtem as flags da interface
+	if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0)
+	{
+		perror("ioctl");
+		exit(1);
+	}
+
+	//Coloca a interface em modo promiscuo
+	ifr.ifr_flags |= IFF_PROMISC;
+	if (ioctl(fd, SIOCSIFFLAGS, &ifr) < 0)
+	{
+		perror("ioctl");
+		exit(1);
+	}
+
+    //se eu quero receber um pacote para mim, nao importando a origem (conectar jogador)
+    if(porta_origem == 0)
+    {
+        estrutura_pacote pacote;
+        while(true)
+        {        
+	        recv(fd, (char *)&pacote, sizeof(pacote), 0x0);
+            if (pacote.ethernet_type == ETHERTYPE && pacote.protocol == UDP_PROTOCOL && pacote.source_port != porta_destino)
+	        {     
+                return pacote;           	      
+            }
+        }
+        return pacote;
+
+    }
+    //se eu quero receber um pacote para mim, sendo a origem especifica (jogador ja conectado)
+    else
+    {
+        estrutura_pacote pacote;
+        while(true)
+        {        
+	        recv(fd, (char *)&pacote, sizeof(pacote), 0x0);
+            if (pacote.ethernet_type == ETHERTYPE && pacote.protocol == UDP_PROTOCOL && pacote.destination_port == porta_origem && pacote.source_port != porta_destino)
+	        {     
+                return pacote;           	      
+            }
+        }
+        return pacote;
+    }    
 }
 
 #endif
